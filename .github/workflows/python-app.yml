@@ -14,7 +14,7 @@ on:
 permissions:
   contents: read
 
-jobs:
+jobs:·
   build:
 
     runs-on: windows-latest
