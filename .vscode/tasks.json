@@ -1,0 +1,77 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "python",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                " $ {file}"
+            ],
+            "options": {
+                "env": {
+                    "PYTHONIOENCODING": "UTF-8"
+                }
+            }
+        },
+        {
+            "label": "制作安装包",
+            "type": "shell",
+            "command": "python setup.py bdist_wheel",
+            "echo": true,  
+            "options": {
+                "env": {
+                    "PYTHONIOENCODING": "UTF-8"
+                }
+            },
+            "presentation":{
+                "reveal":"always",
+                "panel":"shared"
+                },
+            "group":{
+                "kind":"build",
+                "isDefault":false
+                }
+        },
+        {
+            "label": "生成完整安装包",
+            "type": "shell",
+            "command": "pip ",
+            //"command": "python setup.py bdist_wheel",
+            "args": [
+                " wheel --wheel-dir=./build/ ./"
+            ],
+            "echo": true,  
+            "options": {
+                "env": {
+                    "PYTHONIOENCODING": "UTF-8"
+                }
+            },
+            "presentation":{
+                "reveal":"always",
+                "panel":"shared"
+                },
+            "group":{
+                "kind":"build",
+                "isDefault":false
+                }
+        },       
+        {
+            "label": "生成文档Sphinx Build",
+            "type": "shell",
+            "command": "cd documents ; sphinx-build source/ build/",
+            "args": [],
+            "echo": true,  
+            "presentation":{
+                "reveal":"always",
+                "panel":"shared"
+                },
+            "group":{
+                "kind":"build",
+                "isDefault":false
+                }
+        },
+    ]
+}
