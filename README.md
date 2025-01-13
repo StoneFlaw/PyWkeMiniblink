@@ -3,7 +3,7 @@
 
 ## 安装
 
-
+pip install
 
 ## Javascript integration
 
