@@ -51,6 +51,8 @@ def setIcon(hwnd,filename):
         bool: Ture图标文件正常,设置成功,否则False
        
     """
+    if  not os.path.exists(filename):
+        return False
     if not filename.endswith('.ico'):
         return False
 

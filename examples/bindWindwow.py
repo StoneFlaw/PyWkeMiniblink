@@ -35,13 +35,12 @@ def test():
     x,y,w,h = 0,0,640,480
 
     hwnd = createWindow('自创建Win窗口',x,y,w,h)
+    
     setIcon(hwnd,icon_path)
     webview.bind(hwnd,x,y,w,h)   
     
     a = HwndProcAdapter()
 
-  
- 
     a.registerMsgProc(WM_SIZE,wkeMsgProcResize)
     a.registerMsgProc(WM_DESTROY,wkeMsgProcQuit)
     a.attach(hwnd,webview)

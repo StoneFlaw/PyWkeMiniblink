@@ -64,6 +64,7 @@ def test():
     x,y,w,h = 0,0,640,480
 
     hwnd = createTransparentWindow('自创建Win窗口',x,y,w,h)
+    
     setIcon(hwnd,icon_path)
     webview = WebviewWithProcHwnd(isTransparent=True,isZoom=False)
     webview.bind(hwnd,x,y,w,h)   

@@ -49,10 +49,10 @@ def prepare():
         shutil.move(tar_dll,tar_file)
         print(f'    文件 {tar_dll} =>{tar_file}')
     
-    if os.path.exists("documents/source/README.md"):
-        os.remove("documents/source/README.md")
+    if os.path.exists("README.md"):
+        os.remove("README.md")
 
-    shutil.copyfile("README.md","documents/source/README.md")
+    shutil.copyfile("documents/source/README.md","README.md")
     return
 
 def clean():

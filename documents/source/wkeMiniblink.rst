@@ -1,6 +1,3 @@
-wkeMiniblink package
-====================
-
 
 wkeMiniblink.wke module
 -----------------------

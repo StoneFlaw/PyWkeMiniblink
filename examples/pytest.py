@@ -135,8 +135,14 @@ def testCreateWindwow():
     webview.create(0,0,0,0,800,600)
 
     hwnd = webview.getWindowHandle()
+    
     setIcon(hwnd,icon_path)
 
+    def OnCloseEvent(w,param,*args,**kwargs):
+        win32gui.PostQuitMessage(0)
+        return True
+    Wke.event.onWindowClosing(webview,OnCloseEvent,'Closing Window')
+    
     webview.loadURL('https://www.w3school.com.cn/jsref/index.asp')
     webview.showWindow(True)
     Wke.runMessageLoop()
@@ -146,6 +152,7 @@ def testBindWindwow():
     webview = WebviewWindow()
 
     hwnd,x,y,w,h = get_hwnd(0,0,640,480,webview)
+    
     setIcon(hwnd,icon_path)
     webview.bind(hwnd,x,y,w,h)   
 
@@ -169,6 +176,7 @@ def testJsExtend():
     webview.create(0,0,0,0,800,600)
 
     hwnd = webview.getWindowHandle()
+    
     setIcon(hwnd,icon_path)
 
     Wke.extend(jsWindowExtend,'jsWindowExtend', param=webview)
@@ -189,6 +197,7 @@ def testOnEvent():
     webview = WebviewWindow()
     webview.create(0,0,0,0,800,600)
     hwnd = webview.getWindowHandle()
+    
     setIcon(hwnd,icon_path)
 
     def OnEvent(w,param,*args,**kwargs):

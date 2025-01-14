@@ -68,7 +68,7 @@ def testOnEventAll():
 
     event = Wke.event
 
-    event.onWindowClosing(webview,OnEvent,'Title Changed')
+
     event.onURLChanged2(webview,OnEvent,'URL Changed')
     event.onDocumentReady2(webview,OnEvent,'Document is Ready')
     event.onMouseOverUrlChanged(webview,OnEvent,'Mouse over URL')

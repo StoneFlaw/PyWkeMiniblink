@@ -10,20 +10,20 @@ PyWkeMiniblink documentation
 
 .. toctree::
    :maxdepth: 1
-   :caption: Insall and use:
+   :caption: 使用手册
 
    ../README.md
 
 
 .. toctree::
    :maxdepth: 2
-   :caption: PyWkeMiniblink:
+   :caption: 接口详细
 
    modules.rst
 
 .. toctree::
    :maxdepth: 2
-   :caption: Miniblink 工程:
+   :caption: Miniblink
 
    MiniblinkAPI.md
 

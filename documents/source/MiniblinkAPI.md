@@ -17,7 +17,7 @@ Miniblink 是 chromium的精简版,裁剪了对于排版渲染没啥大用的如
 > - MB使用demo请查看https://miniblink.net/views/doc/other.html
 >
 
-## Miniblink C API
+## C API
 
 unsigned int wkeVersion();
 
