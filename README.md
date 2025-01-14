@@ -8,9 +8,7 @@ pip install
 ## Javascript integration
 
 
-```python
 
-```
 
 ## Plugins and Flash support
 
