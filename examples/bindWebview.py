@@ -1,15 +1,7 @@
 # -*- coding:utf-8 -*-
-import os
-import sys
-import time
+import os,sys,platform,time
 from pathlib import Path
 from pprint import pformat
-
-current_folder = Path(__file__).absolute().parent
-father_folder = str(current_folder.parent)
-os.chdir(str(current_folder))
-sys.path.append(father_folder)
-
 
 import ctypes
 import win32gui
@@ -17,9 +9,13 @@ from win32con import *
 from ctypes import windll
 
 
-from wkeMiniblink.miniblink import *
-from wkeMiniblink.wke import *
-from wkeMiniblink.wkeEvent import *
+current_folder = Path(__file__).absolute().parent
+father_folder = str(current_folder.parent)
+os.chdir(str(current_folder))
+sys.path.append(father_folder)
+
+from wkeMiniblink.wke import Wke,WebView,WebWindow
+from wkeMiniblink.wkeEvent import WkeEvent
 from wkeMiniblink.wkeWin32 import *
 from wkeMiniblink.wkeWin32ProcMsg import *
 
@@ -58,15 +54,17 @@ def jsWindowExtend(**kwargs):
         return Wke.setJsArgs(es,'click-menu')
     return 0
 
-def test():
-
+def main():
+    Wke.init()
+    Wke.setCookieAndStagePath(cookie=f'{father_folder }/build/cookie.dat',localStage=f'{father_folder }/build/LocalStage')
+    print("Miniblink Version :",Wke.version,"\n Version:",Wke.Version())
 
     x,y,w,h = 0,0,640,480
 
     hwnd = createTransparentWindow('自创建Win窗口',x,y,w,h)
     
     setIcon(hwnd,icon_path)
-    webview = WebviewWithProcHwnd(isTransparent=True,isZoom=False)
+    webview = WebViewWithProcHwnd(isTransparent=True,isZoom=False)
     webview.bind(hwnd,x,y,w,h)   
     
     #'https://www.w3school.com.cn/jsref/index.asp'
@@ -75,7 +73,7 @@ def test():
     webview.loadFile(f'{father_folder}/res/testdata/testjs.html')
 
     Wke.extend(jsWindowExtend,'jsWindowExtend', param=webview)
-    #webview.showWindow(True)
+
     win32gui.ShowWindow(hwnd,SW_SHOWNORMAL)
     win32gui.PumpMessages()
     return
@@ -84,10 +82,9 @@ def test():
 
 if __name__=='__main__':
 
-    Wke.init()
-    print("Miniblink Version :",Wke.version,"\n Version:",Wke.Version())
 
-    test()
+
+    main()
 
 
  

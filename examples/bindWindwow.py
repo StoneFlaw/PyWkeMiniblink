@@ -17,10 +17,10 @@ from win32con import *
 from ctypes import windll
 
 
-from wkeMiniblink.miniblink import *
-from wkeMiniblink.wke import *
-from wkeMiniblink.wkeEvent import *
+from wkeMiniblink.wke import Wke,WebView,WebWindow
+from wkeMiniblink.wkeEvent import WkeEvent
 from wkeMiniblink.wkeWin32 import *
+from wkeMiniblink.wkeWin32ProcMsg import *
 
 from wkeMiniblink.wkeWin32ProcMsg import wkeMsgProcResize,wkeMsgProcQuit
 
@@ -29,17 +29,19 @@ icon_path=f'{father_folder}/logo.ico'
 
 user32=windll.user32
 
-def test():
-
-    webview = WebviewWindow()
+def main():
+    Wke.init()
+    Wke.setCookieAndStagePath(cookie=f'{father_folder }/build/cookie.dat',localStage=f'{father_folder }/build/LocalStage')
+    print("Miniblink Version :",Wke.version,"\n Version:",Wke.Version())
+    webview = WebWindow()
     x,y,w,h = 0,0,640,480
 
     hwnd = createWindow('自创建Win窗口',x,y,w,h)
     
     setIcon(hwnd,icon_path)
-    webview.bind(hwnd,x,y,w,h)   
+    webview.build(hwnd,x,y,w,h)   
     
-    a = HwndProcAdapter()
+    a = HwndMsgAdapter()
 
     a.registerMsgProc(WM_SIZE,wkeMsgProcResize)
     a.registerMsgProc(WM_DESTROY,wkeMsgProcQuit)
@@ -58,10 +60,9 @@ def test():
 
 if __name__=='__main__':
 
-    Wke.init()
-    print("Miniblink Version :",Wke.version,"\n Version:",Wke.Version())
 
-    test()
+
+    main()
 
 
  

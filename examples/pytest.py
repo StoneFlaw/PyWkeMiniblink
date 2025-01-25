@@ -17,10 +17,10 @@ from win32con import *
 from ctypes import windll
 
 
-from wkeMiniblink.miniblink import *
-from wkeMiniblink.wke import *
-from wkeMiniblink.wkeEvent import *
+from wkeMiniblink.wke import Wke,WebView,WebWindow
+from wkeMiniblink.wkeEvent import WkeEvent
 from wkeMiniblink.wkeWin32 import *
+
 
 
 init_path=os.getcwd()
@@ -102,7 +102,7 @@ def jsCallpy(**kwargs):
     print("args:",val_ls)
 
     hwnd = webview.hwnd
-    webview.runJs('alert("jsCallpy'+str(val_ls)+'")')        
+    webview.runJsCode('alert("jsCallpy'+str(val_ls)+'")')        
 
     return 0
 
@@ -119,10 +119,10 @@ def jsExtendConfirm(**kwargs):
     hwnd = webview.hwnd
     if val_ls[0]=='confirm':
 
-        webview.runJs('confirm("confirm")')
+        webview.runJsCode('confirm("confirm")')
 
-        j_webview = WebviewWindow()
-        j_webview.create(0,0,0,0,400,300)
+        j_webview = WebWindow()
+        j_webview.create(0,0,0,400,300)
         j_webview.loadURL('https://www.hao123.com/')
         j_webview.showWindow()
 
@@ -130,15 +130,15 @@ def jsExtendConfirm(**kwargs):
 
   
 def testCreateWindwow():
-    webview = WebviewWindow()
+    webview = WebWindow()
 
-    webview.create(0,0,0,0,800,600)
+    webview.create(0,0,0,800,600)
 
     hwnd = webview.getWindowHandle()
     
     setIcon(hwnd,icon_path)
 
-    def OnCloseEvent(w,param,*args,**kwargs):
+    def OnCloseEvent(context,*args,**kwargs):
         win32gui.PostQuitMessage(0)
         return True
     Wke.event.onWindowClosing(webview,OnCloseEvent,'Closing Window')
@@ -149,12 +149,12 @@ def testCreateWindwow():
     return   
 
 def testBindWindwow():
-    webview = WebviewWindow()
+    webview = WebWindow()
 
     hwnd,x,y,w,h = get_hwnd(0,0,640,480,webview)
     
     setIcon(hwnd,icon_path)
-    webview.bind(hwnd,x,y,w,h)   
+    webview.build(hwnd,x,y,w,h)   
 
     #'https://www.w3school.com.cn/jsref/index.asp'
     #http://192.168.1.130/nav/
@@ -172,8 +172,8 @@ def testBindWindwow():
 
 def testJsExtend():
 
-    webview = WebviewWindow()
-    webview.create(0,0,0,0,800,600)
+    webview = WebWindow()
+    webview.create(0,0,0,800,600)
 
     hwnd = webview.getWindowHandle()
     
@@ -194,15 +194,16 @@ def testJsExtend():
 
 def testOnEvent():
 
-    webview = WebviewWindow()
-    webview.create(0,0,0,0,800,600)
+    webview = WebWindow()
+    webview.create(0,0,0,800,600)
     hwnd = webview.getWindowHandle()
     
     setIcon(hwnd,icon_path)
 
-    def OnEvent(w,param,*args,**kwargs):
+    def OnEvent(context,*args,**kwargs):
+        param = context["param"]
         #url = kwargs["url"]
-        #w.runJs(f'alert("URL:{url}")')
+        #w.runJsCode(f'alert("URL:{url}")')
         print(f"{str(param)} \nargs:{pformat(args)}\nkwargs:{pformat(kwargs)}\n=======================\n")
         return 0
     
@@ -213,11 +214,12 @@ def testOnEvent():
     Wke.runMessageLoop()
 
 
-if __name__=='__main__':
 
+def main():
     Wke.init()
+    Wke.setCookieAndStagePath(cookie=f'{father_folder }/build/cookie.dat',localStage=f'{father_folder }/build/LocalStage')
     print("Miniblink Version :",Wke.version,"\n Version:",Wke.Version())
-
+    Wke.setCookieAndStagePath(cookie=f'{father_folder }/build/cookie.dat',localStage=f'{father_folder }/build/LocalStage')
     msg = '''==================
     1. testCreateWindow
     2. testBindWindow
@@ -240,5 +242,6 @@ if __name__=='__main__':
     elif c == '7':
         testOnEvent()   
 
- 
+if __name__=='__main__':
+    main()
 

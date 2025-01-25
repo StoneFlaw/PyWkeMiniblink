@@ -11,7 +11,7 @@ __path__ = __import__('pkgutil').extend_path(__path__, __name__)
 
 _LRESULT=c_int
 MINIBLINK_DLL_PATH =""
-
+MINIBLINK_DLL_HANDLE=None
 
 miniblink_core_dll = '\\miniblink.dll'
 if bit == '64bit':
@@ -20,6 +20,13 @@ if bit == '64bit':
 else:
     _LRESULT=c_int
 
+def SetMiniblinkDLL(dll):
+    global MINIBLINK_DLL_HANDLE
+    MINIBLINK_DLL_HANDLE = dll
+    return
+def GetMiniblinkDLL():
+    global MINIBLINK_DLL_HANDLE
+    return MINIBLINK_DLL_HANDLE
 
 def find_miniblink():
     import os, sys

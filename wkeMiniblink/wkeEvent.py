@@ -19,7 +19,7 @@ from ctypes import (c_void_p,
 )
 
 
-from . import _LRESULT,WkeCallbackError
+from . import _LRESULT,WkeCallbackError,GetMiniblinkDLL
 
 
 from .wkeStruct import *
@@ -37,14 +37,15 @@ class WkeEvent():
     Example:
         .. code:: python
 
-            Wke.init(node_path)
-            webview = WebviewWindow()
-            webview.create(0,0,0,0,800,600)
-            def OnEvent(w,param,*args,**kwargs):
+            Wke.init()
+            webview = WebWindow()
+            webview.create(0,0,0,800,600)
+            def OnEvent(context,*args,**kwargs):
+                param = context["param"]
                 print('param',param,'args:',args,'kwargs:',kwargs)
                 return 0
-            #event = Wke.event
-            event = WkeEvent(Wke.getDLL())
+            
+            event = WkeEvent() #或者event = Wke.event
             event.onURLChanged2(webview,OnEvent,'onURLChanged2')
             webview.loadURLW('https://baidu.com')
             webview.showWindow(True)
@@ -52,21 +53,24 @@ class WkeEvent():
     """
   
     def __init__(self,dll=None):
-        """
-        WkeEvent构造函数
+        """WkeEvent构造函数
 
         """
-        self.dll = dll
+        if dll is None:
+            self.dll = GetMiniblinkDLL()
+        else:
+            self.dll = dll
             
         self.context ={}
-
+        self.eventEntries = {}
         #创建所有onXXX对应的注销函数ofXXX
-
+        
         for name,func in getmembers(self):
             if name.startswith("on"):
                 suf = name[2:]
-                offname = f"off{suf}"
-                setattr(self,offname,lambda pwebview: self._off(pwebview,name))
+                self.eventEntries[name] = func
+                #offname = f"off{suf}"
+                #setattr(self,offname,lambda pwebview: self._off(pwebview,name))
           
         return
 
@@ -79,12 +83,10 @@ class WkeEvent():
         """为pwebiew(pyobject)创建func对应的上下文
 
         Args:
-            pwebview(Webview):   webview对象(py) 
+            pwebview(WebView):   webview对象(py) 
             event(str): 事件名称
-            func(callable): 事件回调函数(py)  
+            func(function): 事件回调函数(py)  
             param(obj, optional):      文档加载回调上下文参数
-            *args:
-            **kwargs:
         """ 
 
         eventid = id(event)
@@ -93,7 +95,7 @@ class WkeEvent():
         if webviewid not in self.context:
             self.context[webviewid]={}
        
-        self.context[webviewid][eventid]={"id":eventid,"param":param,"func":func,"webview":pwebview,".cId":pwebview.cId,"event":event}
+        self.context[webviewid][eventid]={"id":eventid,"param":param,"func":func,"webview":pwebview,"id":pwebview.cId,"event":event}
         return eventid
     
     def _off(self,pwebview,event):
@@ -106,11 +108,11 @@ class WkeEvent():
 
         return 
 
-    def offWebviewAllEvent(self,pwebview):
+    def offWebViewAllEvent(self,pwebview):
         """注销所有webview的事件回调函数(仅py端)
 
         Args:
-            pwebview(Webview):   webview对象(py) 
+            pwebview(WebView):   webview对象(py) 
 
         """ 
         webviewid = pwebview.cId
@@ -128,25 +130,25 @@ class WkeEvent():
         if webviewid in self.context :
             if eventid in self.context[webviewid]:
                 context = self.context[webviewid][eventid]
-                return context["func"](context["webview"],context["param"],*args,**kwargs)
+                return context["func"](context,*args,**kwargs)
         raise WkeCallbackError(f"No such callback! {param}")
 
-        
-  
+    def entries(self):    
+        return self.eventEntries
+
     def onDocumentReady2(self,pwebview,func,param = None):
         """设置文档就绪时的函数
 
         对应js里的body onload事件
         
-        Examples:
-            .. code:: c
+        .. code:: c
 
-                //python 事件响应函数( webview:Webview,param,args=[frameId:int],kwargs=None)         
-                typedef void(WKE_CALL_TYPE*wkeDocumentReady2Callback)(wkeWebView webView, void* param, wkeWebFrameHandle frameId); //C原型 
+            //python 事件响应函数(conext:dict,args=[frameId:int],kwargs=None)         
+            typedef void(WKE_CALL_TYPE*wkeDocumentReady2Callback)(wkeWebView webView, void* param, wkeWebFrameHandle frameId); //C原型 
 
         Args:
-            pwebview(Webview):      webview对象(py) 
-            func(callable):         通知回调函数,事件发生时调用
+            pwebview(WebView):      webview对象(py) 
+            func(function):         通知回调函数,事件发生时调用
             param(any, optional):   回调上下文参数,默认为None
 
         """
@@ -164,15 +166,14 @@ class WkeEvent():
 
         网页点击a标签创建新窗口时将触发回调
 
-        Examples:
-            .. code:: c
+        .. code:: c
 
-                //python 事件响应函数 int (webview:Webview,param,args=[navigationType:int,url:str,windowFeatures:struct*],kwargs=None)
-                typedef wkeWebView(WKE_CALL_TYPE*wkeCreateViewCallback)(wkeWebView webView, void* param, wkeNavigationType navigationType, const wkeString url, const wkeWindowFeatures* windowFeatures); //C原型  
-                
+            //python 事件响应函数 int (conext:dict,args=[navigationType:int,url:str,windowFeatures:struct*],kwargs=None)
+            typedef wkeWebView(WKE_CALL_TYPE*wkeCreateViewCallback)(wkeWebView webView, void* param, wkeNavigationType navigationType, const wkeString url, const wkeWindowFeatures* windowFeatures); //C原型  
+            
         Args:
-            pwebview(Webview):      webview对象(py) 
-            func(callable):         通知回调函数,事件发生时调用
+            pwebview(WebView):      webview对象(py) 
+            func(function):         通知回调函数,事件发生时调用
             param(any, optional):   回调上下文参数,默认为None
 
         TODO:
@@ -192,15 +193,14 @@ class WkeEvent():
     def onURLChanged2(self,pwebview,func,param = None):    
         """设置标题变化的回调
 
-        Examples:
-            .. code:: c
+        .. code:: c
 
-                //python 事件响应函数(webview:Webview,param,args=[frameId:int,url:str],kwargs=None)
-                typedef void(WKE_CALL_TYPE*wkeURLChangedCallback2)(wkeWebView webView, void* param, wkeWebFrameHandle frameId, const wkeString url);//C原型  
+            //python 事件响应函数(conext:dict,args=[frameId:int,url:str],kwargs=None)
+            typedef void(WKE_CALL_TYPE*wkeURLChangedCallback2)(wkeWebView webView, void* param, wkeWebFrameHandle frameId, const wkeString url);//C原型  
 
         Args:
-            pwebview(Webview):      webview对象(py) 
-            func(callable):         通知回调函数,事件发生时调用
+            pwebview(WebView):      webview对象(py) 
+            func(function):         通知回调函数,事件发生时调用
             param(any, optional):   回调上下文参数,默认为None
         """   
         eventid = self._on(pwebview,'onURLChanged2',func,param)
@@ -217,15 +217,14 @@ class WkeEvent():
 
         webview如果是真窗口模式，则在收到WM_CLODE消息时触发此回调。可以通过在回调中返回false拒绝关闭窗口 
 
-        Examples:
-            .. code:: c
+        .. code:: c
 
-                //python 事件响应函数(webview:Webview,param,args=[],kwargs=None)
-                typedef bool(WKE_CALL_TYPE*wkeWindowClosingCallback)(wkeWebView webWindow, void* param);//C原型  
+            //python 事件响应函数(conext:dict,args=[],kwargs=None)
+            typedef bool(WKE_CALL_TYPE*wkeWindowClosingCallback)(wkeWebView webWindow, void* param);//C原型  
         
         Args:
-            pwebview(Webview):      webview对象(py) 
-            func(callable):         通知回调函数,事件发生时调用
+            pwebview(WebView):      webview对象(py) 
+            func(function):         通知回调函数,事件发生时调用
             param(any, optional):   回调上下文参数,默认为None
         """   
         eventid = self._on(pwebview,'onWindowClosing',func,param)
@@ -241,14 +240,14 @@ class WkeEvent():
 
         不像wkeOnWindowClosing，这个操作无法取消
 
-        Examples:
-            .. code:: c
+        .. code:: c
 
-                //python 事件响应函数(webview:Webview,param,args=[],kwargs=None)
-                typedef void(WKE_CALL_TYPE*wkeWindowDestroyCallback)(wkeWebView webWindow, void* param);//C原型
+            //python 事件响应函数(conext:dict,args=[],kwargs=None)
+            typedef void(WKE_CALL_TYPE*wkeWindowDestroyCallback)(wkeWebView webWindow, void* param);//C原型
+            
         Args:
-            pwebview(Webview):      webview对象(py) 
-            func(callable):         通知回调函数,事件发生时调用
+            pwebview(WebView):      webview对象(py) 
+            func(function):         通知回调函数,事件发生时调用
             param(any, optional):   回调上下文参数,默认为None
         """   
         eventid = self._on(pwebview,'onWindowDestroy',func,param)
@@ -264,15 +263,14 @@ class WkeEvent():
 
         页面有任何需要刷新的地方，将调用此回调
 
-        Examples:
-            .. code:: c
+        .. code:: c
 
-                //python 事件响应函数(webview:Webview,param,args=[hdc:int,x:int,y:int,cx:int,cy:int],kwargs=None)
-                typedef void(*wkePaintUpdatedCallback)(wkeWebView webView, void* param, const HDC hdc, int x, int y, int cx, int cy);//C原型
+            //python 事件响应函数(conext:dict,args=[hdc:int,x:int,y:int,cx:int,cy:int],kwargs=None)
+            typedef void(*wkePaintUpdatedCallback)(wkeWebView webView, void* param, const HDC hdc, int x, int y, int cx, int cy);//C原型
 
         Args:
-            pwebview(Webview):      webview对象(py) 
-            func(callable):         通知回调函数,事件发生时调用
+            pwebview(WebView):      webview对象(py) 
+            func(function):         通知回调函数,事件发生时调用
             param(any, optional):   回调上下文参数,默认为None
         """   
         eventid = self._on(pwebview,'onPaintUpdated',func,param)
@@ -289,15 +287,14 @@ class WkeEvent():
 
         不同onPaintUpdated的是回调过来的是填充好像素的buffer，而不是DC。方便嵌入到游戏中做离屏渲染
 
-        Examples:
-            .. code:: c
-            
-                //python 事件响应函数(webview:Webview,param,args=[buf:c_char_p,rect:struct,cx:int,cy:int],kwargs=None) 
-                typedef void(WKE_CALL_TYPE*wkePaintBitUpdatedCallback)(wkeWebView webView, void* param, const void* buffer, const wkeRect* r, int width, int height);//C原型
+        .. code:: c
+        
+            //python 事件响应函数(conext:dict,args=[buf:c_char_p,rect:struct,cx:int,cy:int],kwargs=None) 
+            typedef void(WKE_CALL_TYPE*wkePaintBitUpdatedCallback)(wkeWebView webView, void* param, const void* buffer, const wkeRect* r, int width, int height);//C原型
 
         Args:
-            pwebview(Webview):      webview对象(py) 
-            func(callable):         通知回调函数,事件发生时调用
+            pwebview(WebView):      webview对象(py) 
+            func(function):         通知回调函数,事件发生时调用
             param(any, optional):   回调上下文参数,默认为None
 
         TODO:
@@ -314,16 +311,15 @@ class WkeEvent():
     
     def onNavigation(self,pwebview,func,param = None):
         """设置网页开始浏览的回调
+       
+        .. code:: c
 
-        Examples:
-            .. code:: c
-
-                //python 事件响应函数(webview:Webview,param,args=[navigationType:wkeNavigationType],kwargs=None) 
-                typedef bool(*wkeNavigationCallback)(wkeWebView webView, void* param, wkeNavigationType navigationType, const wkeString url);//C原型
+            //python 事件响应函数(conext:dict,args=[navigationType:wkeNavigationType],kwargs=None) 
+            typedef bool(*wkeNavigationCallback)(wkeWebView webView, void* param, wkeNavigationType navigationType, const wkeString url);//C原型
 
         Args:
-            pwebview(Webview):      webview对象(py) 
-            func(callable):         通知回调函数,事件发生时调用
+            pwebview(WebView):      webview对象(py) 
+            func(function):         通知回调函数,事件发生时调用
             param(any, optional):   回调上下文参数,默认为None
 
         NOTE:
@@ -352,15 +348,14 @@ class WkeEvent():
     def onTitleChanged(self,pwebview,func,param = None):
         """设置标题变化的回调
 
-        Examples:
-            .. code:: c
+        .. code:: c
 
-                //python 事件响应函数(webview:Webview,param,args=[title:str],kwargs=None) 
-                typedef void(*wkeTitleChangedCallback)(wkeWebView webView, void* param, const wkeString title);//C原型
+            //python 事件响应函数(conext:dict,args=[title:str],kwargs=None) 
+            typedef void(*wkeTitleChangedCallback)(wkeWebView webView, void* param, const wkeString title);//C原型
 
         Args:
-            pwebview(Webview):      webview对象(py) 
-            func(callable):         通知回调函数,事件发生时调用
+            pwebview(WebView):      webview对象(py) 
+            func(function):         通知回调函数,事件发生时调用
             param(any, optional):   回调上下文参数,默认为None
         """   
     
@@ -377,16 +372,15 @@ class WkeEvent():
         """设置鼠标划过链接元素的回调
 
         鼠标划过的元素，如果是链接，则调用此回调，并发送a标签的url的通知回调
+ 
+        .. code:: c
 
-        Examples:
-            .. code:: c
-
-                //python 事件响应函数(webview:Webview,param,args=[url:str],kwargs=None) 
-                typedef void(*wkeMouseOverUrlChangedCallback)(wkeWebView webView, void* param, const wkeString url);
+            //python 事件响应函数(conext:dict,args=[url:str],kwargs=None) 
+            typedef void(*wkeMouseOverUrlChangedCallback)(wkeWebView webView, void* param, const wkeString url);
 
         Args:
-            pwebview(Webview):      webview对象(py) 
-            func(callable):         通知回调函数,事件发生时调用
+            pwebview(WebView):      webview对象(py) 
+            func(function):         通知回调函数,事件发生时调用
             param(any, optional):   回调上下文参数,默认为None
         """   
         eventid = self._on(pwebview,'onMouseOverUrlChanged',func,param)       
@@ -401,15 +395,14 @@ class WkeEvent():
     def onAlertBox(self,pwebview,func,param = None):
         """设置网页调用alert的回调
 
-        Examples:
-            .. code:: c
+        .. code:: c
 
-                //python 事件响应函数(webview:Webview,param,args=[msg:str],kwargs=None) 
-                typedef void(*wkeAlertBoxCallback)(wkeWebView webView, void* param, const wkeString msg);
+            //python 事件响应函数(conext:dict,args=[msg:str],kwargs=None) 
+            typedef void(*wkeAlertBoxCallback)(wkeWebView webView, void* param, const wkeString msg);
 
         Args:
-            pwebview(Webview):      webview对象(py) 
-            func(callable):         通知回调函数,事件发生时调用
+            pwebview(WebView):      webview对象(py) 
+            func(function):         通知回调函数,事件发生时调用
             param(any, optional):   回调上下文参数,默认为None
         """  
         eventid = self._on(pwebview,'onAlertBox',func,param)           
@@ -424,15 +417,14 @@ class WkeEvent():
     def onConfirmBox(self,pwebview,func,param = None):
         """设置网页调用confirmBox的回调
 
-        Examples:
-            .. code:: c
+        .. code:: c
 
-                //python 事件响应函数(webview:Webview,param,args=[msg:str],kwargs=None) 
-                typedef void(*wkeConfirmBoxCallback)(wkeWebView webView, void* param, const wkeString msg);
+            //python 事件响应函数(conext:dict,args=[msg:str],kwargs=None) 
+            typedef void(*wkeConfirmBoxCallback)(wkeWebView webView, void* param, const wkeString msg);
 
         Args:
-            pwebview(Webview):      webview对象(py) 
-            func(callable):         通知回调函数,事件发生时调用
+            pwebview(WebView):      webview对象(py) 
+            func(function):         通知回调函数,事件发生时调用
             param(any, optional):   回调上下文参数,默认为None
         """  
         eventid = self._on(pwebview,'onConfirmBox',func,param)           
@@ -447,15 +439,14 @@ class WkeEvent():
     def onPromptBox(self,pwebview,func,param = None):
         """设置网页调用PromptBox的回调
 
-        Examples:
-            .. code:: c
+        .. code:: c
 
-                //python 事件响应函数(webview:Webview,param,args=[msg:str,defaultResult:str,result:c_char_p],kwargs=None) 
-                typedef void(*wkePromptBoxCallback)(wkeWebView webView, void* param, const wkeString msg,wkeString defaultResult,wkeString result);
+            //python 事件响应函数(conext:dict,args=[msg:str,defaultResult:str,result:c_char_p],kwargs=None) 
+            typedef void(*wkePromptBoxCallback)(wkeWebView webView, void* param, const wkeString msg,wkeString defaultResult,wkeString result);
 
         Args:
-            pwebview(Webview):      webview对象(py) 
-            func(callable):         通知回调函数,事件发生时调用
+            pwebview(WebView):      webview对象(py) 
+            func(function):         通知回调函数,事件发生时调用
             param(any, optional):   回调上下文参数,默认为None
         """
         eventid = self._on(pwebview,'onPromptBox',func,param)       
@@ -471,15 +462,15 @@ class WkeEvent():
     def onConsole(self,pwebview,func,param = None):
         """设置网页调用console触发的回调
 
-        Examples:
-            .. code:: c
 
-                //python 事件响应函数(webview:Webview,param,args=[level:str,msg:str,sourceName:str,sourceLine:int,stackTrace:str],kwargs=None) 
-                typedef void(WKE_CALL_TYPE*wkeConsoleCallback)(wkeWebView webView, void* param, wkeConsoleLevel level, const wkeString message, const wkeString sourceName, unsigned sourceLine, const wkeString stackTrace);
+        .. code:: c
+
+            //python 事件响应函数(conext:dict,args=[level:str,msg:str,sourceName:str,sourceLine:int,stackTrace:str],kwargs=None) 
+            typedef void(WKE_CALL_TYPE*wkeConsoleCallback)(wkeWebView webView, void* param, wkeConsoleLevel level, const wkeString message, const wkeString sourceName, unsigned sourceLine, const wkeString stackTrace);
 
         Args:
-            pwebview(Webview):      webview对象(py) 
-            func(callable):         通知回调函数,事件发生时调用
+            pwebview(WebView):      webview对象(py) 
+            func(function):         通知回调函数,事件发生时调用
             param(any, optional):   回调上下文参数,默认为None
         """
         eventid = self._on(pwebview,'onConsole',func,param)       
@@ -496,15 +487,15 @@ class WkeEvent():
     def onDownload(self,pwebview,func,param = None):
         """设置网页开始下载的回调
 
-        Examples:
-            .. code:: c
-            
-            //python 事件响应函数(webview:Webview,param,args=[url:str],kwargs=None) 
+    
+        .. code:: c
+
+            //python 事件响应函数(conext:dict,args=[url:str],kwargs=None) 
             typedef bool(WKE_CALL_TYPE*wkeDownloadCallback)(wkeWebView webView, void* param, const char* url);
 
         Args:
-            pwebview(Webview):      webview对象(py) 
-            func(callable):         通知回调函数,事件发生时调用
+            pwebview(WebView):      webview对象(py) 
+            func(function):         通知回调函数,事件发生时调用
             param(any, optional):   回调上下文参数,默认为None
         """   
         eventid = self._on(pwebview,'onDownload',func,param)         
@@ -521,15 +512,15 @@ class WkeEvent():
 
         一个网络请求发送后，收到服务器response触发回调
 
-        Examples:
-            .. code:: c
+      
+        .. code:: c
 
-                //python 事件响应函数(webview:Webview,param,args=[url:str,job:c_void_p],kwargs=None)  
-                typedef bool(WKE_CALL_TYPE*wkeNetResponseCallback)(wkeWebView webView, void* param, const utf8* url, wkeNetJob job);
+            //python 事件响应函数(conext:dict,args=[url:str,job:c_void_p],kwargs=None)  
+            typedef bool(WKE_CALL_TYPE*wkeNetResponseCallback)(wkeWebView webView, void* param, const utf8* url, wkeNetJob job);
 
         Args:
-            pwebview(Webview):      webview对象(py) 
-            func(callable):         通知回调函数,事件发生时调用
+            pwebview(WebView):      webview对象(py) 
+            func(function):         通知回调函数,事件发生时调用
             param(any, optional):   回调上下文参数,默认为None 
 
         TODO:
@@ -549,15 +540,15 @@ class WkeEvent():
         
         任何网络请求发起前会触发此回调
 
-        Examples:
-            .. code:: c
+        
+        .. code:: c
 
-                //python 事件响应函数(webview:Webview,param,args=[url:str],kwargs=None)  
-                typedef bool(*wkeLoadUrlBeginCallback)(wkeWebView webView, void* param, const char *url, void *job);
+            //python 事件响应函数(conext:dict,args=[url:str],kwargs=None)  
+            typedef bool(*wkeLoadUrlBeginCallback)(wkeWebView webView, void* param, const char *url, void *job);
 
         Args:
-            pwebview(Webview):      webview对象(py) 
-            func(callable):         通知回调函数,事件发生时调用
+            pwebview(WebView):      webview对象(py) 
+            func(function):         通知回调函数,事件发生时调用
             param(any, optional):   回调上下文参数,默认为None    
 
         NOTE：
@@ -580,15 +571,14 @@ class WkeEvent():
 
             如果在wkeLoadUrlBeginCallback里没设置wkeNetHookRequest，则不会触发wkeOnLoadUrlEnd回调。
 
-        Examples:
-            .. code:: c
+        .. code:: c
 
-                //python 事件响应函数(webview:Webview,param,args=[url:str,job:struct *,buf:c_char_p,lens:int],kwargs=None)  
-                typedef void(WKE_CALL_TYPE*wkeLoadUrlEndCallback)(wkeWebView webView, void* param, const utf8* url, wkeNetJob job, void* buf, int len);
+            //python 事件响应函数(conext:dict,args=[url:str,job:struct *,buf:c_char_p,lens:int],kwargs=None)  
+            typedef void(WKE_CALL_TYPE*wkeLoadUrlEndCallback)(wkeWebView webView, void* param, const utf8* url, wkeNetJob job, void* buf, int len);
 
         Args:
-            pwebview(Webview):      webview对象(py) 
-            func(callable):         通知回调函数,事件发生时调用
+            pwebview(WebView):      webview对象(py) 
+            func(function):         通知回调函数,事件发生时调用
             param(any, optional):   回调上下文参数,默认为None    
 
         TODO:
@@ -606,15 +596,14 @@ class WkeEvent():
     def onLoadUrlFail(self,pwebview,func,param = None):
         """设置网络请求失败的回调
 
-        Examples:
-            .. code:: c
+        .. code:: c
 
-                //python 事件响应函数(webview:Webview,param,args=[url:str,job:struct *],kwargs=None)  
-                typedef void(WKE_CALL_TYPE*wkeLoadUrlFailCallback)(wkeWebView webView, void* param, const utf8* url, wkeNetJob job);
+            //python 事件响应函数(conext:dict,args=[url:str,job:struct *],kwargs=None)  
+            typedef void(WKE_CALL_TYPE*wkeLoadUrlFailCallback)(wkeWebView webView, void* param, const utf8* url, wkeNetJob job);
 
         Args:
-            pwebview(Webview):      webview对象(py) 
-            func(callable):         通知回调函数,事件发生时调用
+            pwebview(WebView):      webview对象(py) 
+            func(function):         通知回调函数,事件发生时调用
             param(any, optional):   回调上下文参数,默认为None    
 
         TODO:
@@ -631,15 +620,14 @@ class WkeEvent():
     def onLoadUrlFinish(self,pwebview,func,param = None):
         """设置网络请求完成的回调
 
-        Examples:
-            .. code:: c
+        .. code:: c
 
-                //python 事件响应函数(webview:Webview,param,args=[url:str,result:int,failedReason:str],kwargs=None)  
-                typedef void(WKE_CALL_TYPE*wkeLoadUrlFailCallback)(wkeWebView webView, void* param, const utf8* url, wkeNetJob job);
+            //python 事件响应函数(conext:dict,args=[url:str,result:int,failedReason:str],kwargs=None)  
+            typedef void(WKE_CALL_TYPE*wkeLoadUrlFailCallback)(wkeWebView webView, void* param, const utf8* url, wkeNetJob job);
 
         Args:
-            pwebview(Webview):      webview对象(py) 
-            func(callable):         通知回调函数,事件发生时调用
+            pwebview(WebView):      webview对象(py) 
+            func(function):         通知回调函数,事件发生时调用
             param(any, optional):   回调上下文参数,默认为None    
         """
         eventid = self._on(pwebview,'onLoadUrlFinish',func,param)   
@@ -663,16 +651,14 @@ class WkeEvent():
 			    if (webview.isMainFrame(temInfo.frame)) :
 			        webview.wkeNetGetFavicon(HandleFaviconReceived, divaram);
 			    
+        .. code:: c
 
-        Examples:
-            .. code:: c
-
-                //python 事件响应函数(webview:Webview,param,args=[url:str,buf:wkeMemBuf *],kwargs=None)  
-                typedef void(WKE_CALL_TYPE*wkeOnNetGetFaviconCallback)(wkeWebView webView, void* param, const utf8* url, wkeMemBuf* buf);
+            //python 事件响应函数(conext:dict,args=[url:str,buf:wkeMemBuf *],kwargs=None)  
+            typedef void(WKE_CALL_TYPE*wkeOnNetGetFaviconCallback)(wkeWebView webView, void* param, const utf8* url, wkeMemBuf* buf);
 
         Args:
-            pwebview(Webview):      webview对象(py) 
-            func(callable):         通知回调函数,事件发生时调用
+            pwebview(WebView):      webview对象(py) 
+            func(function):         通知回调函数,事件发生时调用
             param(any, optional):   回调上下文参数,默认为None    
         """
         eventid = self._on(pwebview,'onGetFavicon',func,param)   

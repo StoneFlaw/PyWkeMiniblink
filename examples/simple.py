@@ -1,20 +1,32 @@
 # -*- coding:utf-8 -*-
 import os,sys,platform,time
+from pathlib import Path
 import win32gui
-from wkeMiniblink.wke import *
-from wkeMiniblink.wkeEvent import *
+
+current_folder = Path(__file__).absolute().parent
+father_folder = str(current_folder.parent)
+os.chdir(str(current_folder))
+sys.path.append(father_folder)
+
+from wkeMiniblink.wke import Wke,WebView,WebWindow
+from wkeMiniblink.wkeEvent import WkeEvent
 from wkeMiniblink.wkeWin32 import *
 
-if __name__=='__main__':
+def main():
     Wke.init()
-    webview = WebviewWindow()
-    webview.create(0,0,0,0,800,600)
-    def OnCloseEvent(w,param,*args,**kwargs):
+    Wke.setCookieAndStagePath(cookie=f'{father_folder }/build/cookie.dat',localStage=f'{father_folder }/build/LocalStage')
+    webview = WebWindow()
+    webview.create(0,0,0,800,600)
+    def OnCloseEvent(context,*args,**kwargs):
         win32gui.PostQuitMessage(0)
         return True
-    Wke.event.onWindowClosing(webview,OnCloseEvent,param='App Quit')
+    webview.onWindowClosing(OnCloseEvent,param='App Quit')
+    
     webview.loadURL('https://www.w3school.com.cn/jsref/index.asp')
     webview.showWindow(True)
-    Wke.runMessageLoop()
- 
+    wkePumpMessages()
+    #Wke.runMessageLoop()
+    #win32gui.PumpMessages()
 
+if __name__=='__main__':
+    main()

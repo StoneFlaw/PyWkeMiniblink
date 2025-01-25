@@ -1,10 +1,10 @@
 # -*- coding:utf-8 -*-
+import os,sys,platform,time
 import binascii
-import json
 from inspect import getmembers
 
 
-from . import _LRESULT,WkeCallbackError,MINIBLINK_DLL_PATH
+from . import _LRESULT,WkeCallbackError,MINIBLINK_DLL_PATH,SetMiniblinkDLL,GetMiniblinkDLL
 from .miniblink import MiniblinkInit
 from .wkeStruct import *
 from .wkeEvent import WkeEvent
@@ -26,8 +26,8 @@ def _WkeJsBindCallback(execState,c_id):
     """
     jsBind的C-Python 回调函数,调用实际注册在Wke上下文中的Py函数
     """
-    if c_id in Wke.jsBinderContext:
-        context = Wke.jsBinderContext[c_id]
+    if c_id in Wke._jsBinderContext:
+        context = Wke._jsBinderContext[c_id]
         return context["func"](es=execState,param=context["param"])   
     return None
 
@@ -50,34 +50,51 @@ class Wke():
     event = None
     #接口版本数值
     version = 0
-    jsBinderContext = {}
+
+    _jsBinderContext = {}
 
 
+    _localStagePath = None
+    _cookiePath =  None
     @staticmethod
     def Version():
         return Wke.dll.wkeVersionString()
 
     @staticmethod
-    def init(path=MINIBLINK_DLL_PATH):
+    def init(path=MINIBLINK_DLL_PATH,**kwargs):
         """加载动态库
 
         初始化整个mb。此句必须在所有mb api前最先调用。并且所有mb api必须和调用wkeInit的线程为同个线程
 
         Args:
             path(str):   动态库的文件位置
+
         """
         
         Wke.dll = MiniblinkInit(path)
-        
-        Wke.event = WkeEvent(Wke.dll)
+        SetMiniblinkDLL(Wke.dll)
+        Wke.event = WkeEvent()
 
         Wke.version = Wke.dll.wkeVersion()
         #复制动态库中所有wke开头的功能函数
         for name,func in getmembers(Wke.dll):
             if name.startswith(("wke")):
                 setattr(Wke,name,func)
-        return
 
+
+        
+
+        return
+    
+    @staticmethod
+    def getDLL():
+        """返回动态库DLL对象
+
+        Returns:
+            cdll: 动态库DLL对象
+        """
+        return Wke.dll
+    
     @staticmethod
     def loaded():
         """查询是否已加载动态库
@@ -89,24 +106,30 @@ class Wke():
             return False
         return True
     
-    @staticmethod
-    def getDLL():
-        """返回动态库DLL对象
 
-        Returns:
-            cdll: 动态库DLL对象
-        """
-        return Wke.dll
     
+    @staticmethod
+    def setCookieAndStagePath(**kwargs):
+        """设置Cookie/LocalStage的存储路径
 
+        Keyword Args:
+            cookie(str): Cookie的存储文件路径
+            localStagePath(str): LocalStage的存储目录路径
+
+        """
+        if "cookie" in kwargs:
+            Wke._cookiePath = os.path.realpath(kwargs["cookie"])
+        if "localStage" in kwargs:
+            Wke._localStagePath = os.path.realpath(kwargs["localStage"])
+        return 
 
     @staticmethod  
-    def jsBindFunction(jsFuncName,pyCallback, param=0,arg_count=0):
+    def _jsBindFunction(jsFuncName,pyCallback, param=0,arg_count=0):
         """设置一个python回调函数作为指定名称的js函数使用
 
         Args:
             jsFuncName(str):        js函数名
-            pyCallback(callable):   python函数
+            pyCallback(function):   python函数
             param(any, optional):             回调上下文
             arg_count(int, optional):         参数个数
         """
@@ -115,9 +138,13 @@ class Wke():
     @staticmethod    
     def runMessageLoop():
         """Wke执行消息循环
+
+        也可以用win32gui.PumpMessages()
         """
         Wke.dll.wkeRunMessageLoop(0)
 
+
+    
     @staticmethod    
     def jsGC():
         """JS触发垃圾回收
@@ -133,17 +160,19 @@ class Wke():
         Examples:
             .. code:: python
 
-                webview = WebviewWindow()
-                webview.create(0,0,0,0,800,600)
-                wjsextend = WkeJs()
-                def jsCallpy(**kwargs):
+                webview = WebWindow()
+                webview.create(0,0,0,800,600)
+  
+                def pyAction(**kwargs):
                     es=kwargs['es']
                     context =kwargs['param']
                     webview = context
                     arg_count=Wke.jsArgCount(es)
                     val_ls=Wke.getJsArgs(es,arg_count)
-                    webview.runJs('alert("jsCallpy'+str(val_ls)+'")')    
-                wjsextend.extend(jsCallpy,'jsCallpy', param=webview)
+                    webview.runJsCode('alert("jsCallpy'+str(val_ls)+'")')  
+                    return
+
+                Wke.extend(pyAction,'jsCallpy', param=webview)
 
             在HTML中
 
@@ -158,8 +187,8 @@ class Wke():
         Args:
             func(:obj:`function`):         扩展函数的python实现
             name(:obj:`str`):              扩展的python函数在js中的名称
-            param(any, optional):           python函数的回调上下文
-            arg_count(int, optional):         扩展函数的参数个数
+            param(any, optional):          python函数的回调上下文
+            arg_count(int, optional):      扩展函数的参数个数
         Raise:
             SyntaxError : func为不可调用时抛出            
         """  
@@ -168,9 +197,9 @@ class Wke():
             raise SyntaxError(f"{func} not callable")
         rawname = name.encode()
         funcid = id(func)
-        Wke.jsBinderContext[funcid]={"param":param,"name":name,"rawname":rawname,"func":func,"argcount":arg_count}
+        Wke._jsBinderContext[funcid]={"param":param,"name":name,"rawname":rawname,"func":func,"argcount":arg_count}
         
-        return Wke.jsBindFunction(rawname,_WkeJsBindCallback,arg_count,_LRESULT(funcid)) 
+        return Wke._jsBindFunction(rawname,_WkeJsBindCallback,arg_count,_LRESULT(funcid)) 
 
     @staticmethod  
     def jsArgCount(arg):
@@ -342,11 +371,13 @@ class Wke():
     
 
 
-class Webview():
-    """Wke页面类
+class WebView():
+    """Wke网页视图
 
-
-      
+    实现离屏网页视图功能，包括加载/渲染/设置/Js/Cookie等。
+    
+    并不实际创建一个窗口,需要绑定一个外部窗口，使用额外的API将Webview的内容绘制到窗口上并处理某些需要的窗口消息。
+ 
     """
 
     def __init__(self,*args,**kwargs):
@@ -364,6 +395,35 @@ class Webview():
         self.w = -1
         self.h = -1
         self.name = None
+
+        self._localStagePath = None
+        self._cookiePath =  None
+
+        return
+
+    def setCookieAndStagePath(self,**kwargs):
+        """设置Cookie/LocalStage的存储路径
+
+        Keyword Args:
+            cookie(str): Cookie的存储文件路径
+            localStagePath(str): LocalStage的存储目录路径
+        """
+
+        if "cookie" in kwargs and os.path.exists(kwargs["cookie"]):
+            self._cookiePath = os.path.realpath(kwargs["cookie"])
+        if "localStage" in kwargs and os.path.exists(kwargs["localStage"]):
+            self._localStagePath = os.path.realpath(kwargs["localStage"])
+        
+        if self._cookiePath is None:
+            self._cookiePath = Wke._cookiePath
+
+        self.setCookieJarFullPath(self._cookiePath)
+
+        if self._localStagePath is None:
+            self._localStagePath = Wke._localStagePath
+
+        self.setLocalStorageFullPath(self._localStagePath)
+
         return
     
     def __del__(self):
@@ -376,7 +436,7 @@ class Webview():
         """页面的句柄
 
         Returns:
-            int: 
+            int: 视图页面的句柄,即c api获取的webview
 
         """
         return self.cId
@@ -386,7 +446,7 @@ class Webview():
         """页面宽度  
 
         Returns:
-            int: 
+            int: 视图页面宽度
         """
         self.w = self.dll.wkeWidth(self.cId)
         return self.w
@@ -396,7 +456,7 @@ class Webview():
         """页面高度
 
         Returns:
-            int:  
+            int:  视图页面高度
         """
         self.h = self.dll.wkeHeight(self.cId)   
         return self.h
@@ -406,7 +466,7 @@ class Webview():
         """页面内容宽度
 
         Returns:
-            int: 
+            int: 视图页面内容宽度
         """ 
         return self.dll.wkeContentsWidth(self.cId)
 
@@ -415,7 +475,7 @@ class Webview():
         """页面内容高度
 
         Returns:
-            int: 
+            int: 视图页面内容高度
         """ 
         
         return self.dll.wkeContentsHeight(self.cId)
@@ -445,7 +505,7 @@ class Webview():
             return 0
         
         #创建一个页面,获取句柄
-        self.create()
+        self.cId = self.dll.wkeCreateWebView()
 
         #为页面设定窗体句柄
         self.setHandle(hwnd)
@@ -1030,16 +1090,13 @@ class Webview():
         return mhtml_content
 
 
-    def cancelRequest(self,job,url,ident_ls=['.jpg']):
 
-        for x in ident_ls:
-            if  x in url:
-                self.dll.wkeNetCancelRequest(job)
-                return True
-        return False
 
     def setResponseData(self,job,data='',file_name=None):
-
+        """
+        Todo: 
+            API文档上没有这一段
+        """
         lens=len(data)
         if lens!=0:
             self.dll.wkeNetSetData(job,data,lens)
@@ -1057,9 +1114,23 @@ class Webview():
                 self.dll.wkeNetSetData(job,data,lens)
                 return True
         return False    
-   
+    
+    def cancelRequest(self,job,url,ident_ls=['.jpg']):
+        """
+        FIXME: 
+            没修正
+        """  
+        for x in ident_ls:
+            if  x in url:
+                self.dll.wkeNetCancelRequest(job)
+                return True
+        return False
+    
     def getPostData(self,job,url,ident=''):
-        
+        """
+        FIXME: 
+            没修正
+        """  
         if ident not in url:return '',0,None
         elements=self.dll.wkeNetGetPostBody(job)
         try:
@@ -1072,7 +1143,10 @@ class Webview():
         return data,lens,elements
     
     def saveBufData(self,url,buf,lens):
-   
+        """
+        FIXME: 
+            没修正
+        """
         if lens==0:return
         contents=(c_char * lens).from_address(buf)
         _type=self.get_type(url)
@@ -1163,7 +1237,7 @@ class Webview():
     def getJsExec(self):
         return self.dll.wkeGlobalExec(self.cId)
 
-    def runJs(self,js_code:str):
+    def runJsCode(self,js_code:str):
         """页面执行一段指定的js代码
 
         Args:   
@@ -1189,9 +1263,9 @@ class Webview():
         """
         with open(file_name) as f:
             js_code=f.read()
-            return self.runJs(js_code)        
+            return self.runJsCode(js_code)        
         
-    def runJsGlobal(self,funcName,paramList=[],thisValue=0):   
+    def runJsFunc(self,funcName,paramList=[],thisValue=0):   
         """页面主frame执行js函数
 
         Args:   
@@ -1336,12 +1410,74 @@ class Webview():
         self.dll.wkeFireWindowsMessage(self.cId,self.hwnd,msg,wParam,lParam,byref(result))
         return result.value
 
-
-
+    ##############OnEvent##############
+    def onAlertBox(self,param,*args,**kwargs):
+        """ 设置网页调用alert的回调 """
+        return Wke.event.onAlertBox(self,param,*args,**kwargs)
+    def onConfirmBox(self,param,*args,**kwargs):
+        """ 设置网页调用confirmBox的回调 """
+        return Wke.event.onConfirmBox(self,param,*args,**kwargs)
+    def onConsole(self,param,*args,**kwargs):
+        """ 设置网页调用console触发的回调 """
+        return Wke.event.onConsole(self,param,*args,**kwargs)
+    def onCreateView(self,param,*args,**kwargs):
+        """ 设置创建新窗口时的回调 """
+        return Wke.event.onCreateView(self,param,*args,**kwargs)
+    def onDocumentReady2(self,param,*args,**kwargs):
+        """ 设置文档就绪时的函数 """
+        return Wke.event.onDocumentReady2(self,param,*args,**kwargs)
+    def onDownload(self,param,*args,**kwargs):
+        """ 设置网页开始下载的回调 """
+        return Wke.event.onDownload(self,param,*args,**kwargs)
+    def onGetFavicon(self,param,*args,**kwargs):
+        """ 设置获取favicon的回调 """
+        return Wke.event.onGetFavicon(self,param,*args,**kwargs)
+    def onLoadUrlBegin(self,param,*args,**kwargs):
+        """ 设置网络请求发起前的回调 """
+        return Wke.event.onLoadUrlBegin(self,param,*args,**kwargs)
+    def onLoadUrlEnd(self,param,*args,**kwargs):
+        """ 设置网络请求结束的回调 """
+        return Wke.event.onLoadUrlEnd(self,param,*args,**kwargs)
+    def onLoadUrlFail(self,param,*args,**kwargs):
+        """ 设置网络请求失败的回调 """
+        return Wke.event.onLoadUrlFail(self,param,*args,**kwargs)
+    def onLoadUrlFinish(self,param,*args,**kwargs):
+        """ 设置网络请求完成的回调 """
+        return Wke.event.onLoadUrlFinish(self,param,*args,**kwargs)
+    def onMouseOverUrlChanged(self,param,*args,**kwargs):
+        """ 设置鼠标划过链接元素的回调 """
+        return Wke.event.onMouseOverUrlChanged(self,param,*args,**kwargs)
+    def onNavigation(self,param,*args,**kwargs):
+        """ 设置网页开始浏览的回调 """
+        return Wke.event.onNavigation(self,param,*args,**kwargs)
+    def onNetResponse(self,param,*args,**kwargs):
+        """ 设置收到网络请求的回调 """
+        return Wke.event.onNetResponse(self,param,*args,**kwargs)
+    def onPaintBitUpdated(self,param,*args,**kwargs):
+        """  设置窗口绘制刷新时回调  """
+        return Wke.event.onPaintBitUpdated(self,param,*args,**kwargs)
+    def onPaintUpdated(self,param,*args,**kwargs):
+        """  设置窗口绘制刷新时回调 """
+        return Wke.event.onPaintUpdated(self,param,*args,**kwargs)
+    def onPromptBox(self,param,*args,**kwargs):
+        """ 设置网页调用PromptBox的回调 """
+        return Wke.event.onPromptBox(self,param,*args,**kwargs)
+    def onTitleChanged(self,param,*args,**kwargs):
+        """ 设置标题变化的回调 """
+        return Wke.event.onTitleChanged(self,param,*args,**kwargs)
+    def onURLChanged2(self,param,*args,**kwargs):
+        """ 设置标题变化的回调 """
+        return Wke.event.onURLChanged2(self,param,*args,**kwargs)
+    def onWindowClosing(self,param,*args,**kwargs):
+        """  设置窗口关闭时回调   """
+        return Wke.event.onWindowClosing(self,param,*args,**kwargs)
+    def onWindowDestroy(self,param,*args,**kwargs):
+        """  设置窗口销毁时回调 """
+        return Wke.event.onWindowDestroy(self,param,*args,**kwargs)
 
         
-class WebviewWindow(Webview):
-    """带真实窗口的wkeWebView
+class WebWindow(WebView):
+    """Wke网页视图带窗口
     
     
     """
@@ -1351,7 +1487,7 @@ class WebviewWindow(Webview):
 
         return
     
-    def create(self,_type=0,parent=0,x=0,y=0,width=480,height=320):
+    def create(self,parent=0,x=0,y=0,width=480,height=320,_type=0):
         """创建一个带真实窗口的wkeWebView
 
         .. code:: c
@@ -1376,8 +1512,8 @@ class WebviewWindow(Webview):
         self.w,self.h = width,height
         return self.cId
     
-    def bind(self,hwnd,x=0,y=0,width=640,height=480):
-        """为一个真实窗口绑定一个wkeWebViewWindow
+    def build(self,hwnd,x=0,y=0,width=640,height=480,_type=2):
+        """为一个真实窗口绑定一个wkeWebWindow
 
         Args:
             hwnd (int):         窗口句柄
@@ -1391,7 +1527,7 @@ class WebviewWindow(Webview):
         
         self.cId = self.dll.wkeCreateWebWindow(2,hwnd,x,y,width,height)
 
-        self.type = 2
+        self.type = _type
         self.hwnd = hwnd
         #self.dll.wkeShowWindow(id,show)
         self.x,self.y = x,y

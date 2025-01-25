@@ -50,37 +50,37 @@ def get_hwnd(x=0,y=0,w=860,h=760):
     return hwnd,x,y,w,h
 
 
-def testOnEventAll():
+def main():
 
     Wke.init()
-    webview = WebviewWindow()
-    webview.create(0,0,0,0,800,600)
-    def OnEvent(w,param,*args,**kwargs):
+    Wke.setCookieAndStagePath(cookie=f'{father_folder }/build/cookie.dat',localStage=f'{father_folder }/build/LocalStage')
+    webview = WebWindow()
+    webview.create(0,0,0,800,600)
+    def OnEvent(context,*args,**kwargs):
+        param = context["param"]
         print(f"{str(param)} \nargs:{pformat(args)}\nkwargs:{pformat(kwargs)}\n=======================\n")
         return 0
     
 
-    def OnCloseEvent(w,param,*args,**kwargs):
+    def OnCloseEvent(context,*args,**kwargs):
+        param = context["param"]
         print(f"{str(param)} \nargs:{pformat(args)}\nkwargs:{pformat(kwargs)}\n=======================\n")
         win32gui.PostQuitMessage(0)
         return True
 
 
-    event = Wke.event
+    webview.onURLChanged2(OnEvent,'URL Changed')
+    webview.onDocumentReady2(OnEvent,'Document is Ready')
+    webview.onMouseOverUrlChanged(OnEvent,'Mouse over URL')
+    webview.onWindowClosing(OnCloseEvent,'Closing Window')
+    webview.onAlertBox(OnEvent,'AlertBox')
+    webview.onConfirmBox(OnEvent,'ConfirmBox')
+    webview.onPromptBox(OnEvent,'PromptBox')
+    webview.onConsole(OnEvent,'Console')
+    webview.onDownload(OnEvent,'Download')
 
-
-    event.onURLChanged2(webview,OnEvent,'URL Changed')
-    event.onDocumentReady2(webview,OnEvent,'Document is Ready')
-    event.onMouseOverUrlChanged(webview,OnEvent,'Mouse over URL')
-    event.onWindowClosing(webview,OnCloseEvent,'Closing Window')
-    event.onAlertBox(webview,OnEvent,'AlertBox')
-    event.onConfirmBox(webview,OnEvent,'ConfirmBox')
-    event.onPromptBox(webview,OnEvent,'PromptBox')
-    event.onConsole(webview,OnEvent,'Console')
-    event.onDownload(webview,OnEvent,'Download')
-
-    #event.onNetResponse(webview,OnEvent,'NetResponse')
-    event.onLoadUrlEnd(webview,OnEvent,'LoadUrlEnd')
+    #webview.onNetResponse(OnEvent,'NetResponse')
+    webview.onLoadUrlEnd(OnEvent,'LoadUrlEnd')
 
 
 
@@ -92,4 +92,4 @@ def testOnEventAll():
 
 if __name__=='__main__':
     
-    testOnEventAll()   
+    main()   

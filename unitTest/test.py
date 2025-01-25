@@ -19,7 +19,7 @@ from win32con import *
 from ctypes import windll
 
 from wkeMiniblink.miniblink import *
-from wkeMiniblink.wke import *
+from wkeMiniblink.wke import Wke,WebView,WebWindow
 from wkeMiniblink.wkeEvent import *
 from wkeMiniblink.wkeWin32 import *
 
@@ -28,8 +28,8 @@ user32=windll.user32
 class Test( unittest . TestCase ):
     def setUp( self ):
 
-        self.webview = WebviewWindow()
-        self.webview.create(0,0,0,0,800,600)
+        self.webview = WebWindow()
+        self.webview.create(0,0,0,800,600)
         self.webview.loadFile(f'{father_folder}/res/testdata/index.html')
         return
         
@@ -46,6 +46,10 @@ class Test( unittest . TestCase ):
 
 if __name__=='__main__':
     Wke.init()
-    unittest.main()
+
+    suit = unittest.TestSuite()
+    suit.addTests( [Test("test_webviewUserKey")])
+    runner = unittest.TextTestRunner()
+    runner.run(suit)
  
 

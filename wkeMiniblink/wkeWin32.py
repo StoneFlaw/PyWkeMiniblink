@@ -1,13 +1,11 @@
 # -*- coding:utf-8 -*-
 
-
-
-
-import os
+import os,sys,platform,time
 import json
-
+from threading import  Lock,Event,Thread
 
 from ctypes import (cast,c_char_p,py_object,sizeof,byref,string_at,create_string_buffer,POINTER)
+from ctypes import (c_uint32,c_int32)
 from ctypes import (
     c_void_p,
     windll,
@@ -15,7 +13,7 @@ from ctypes import (
     CFUNCTYPE,
     WINFUNCTYPE
 )
-from ctypes.wintypes import (RGB,
+from ctypes.wintypes import (RGB,MSG,
     DWORD,
     HWND,
     UINT
@@ -28,7 +26,7 @@ from win32con import *
 
 
 from . import _LRESULT,WkeCallbackError
-from .wke import Wke,Webview
+from .wke import Wke,WebView
 from .wkeStruct import *
 
 RelPath = lambda file : os.path.join(os.path.dirname(os.path.abspath(__file__)), file)
@@ -42,7 +40,7 @@ GetWindowLong = windll.user32.GetWindowLongA
 
 
 def setIcon(hwnd,filename):
-    """为一个真实窗口绑定一个wkeWebViewWindow
+    """为一个真实窗口绑定一个wkeWebWindow
 
     Args:
         hwnd (int):         窗口句柄
@@ -141,7 +139,7 @@ def replaceHWndProc(hwnd,newHwndProc):
 
     Args:   
         hwnd(int):窗体句柄
-        newHwndProc(callable):  新的窗口处理过程
+        newHwndProc(function):  新的窗口处理过程
     Returns:
         int: 旧窗体处理过程  
     """
@@ -155,6 +153,10 @@ def replaceHWndProc(hwnd,newHwndProc):
 
 
 def wkeTransparentPaint(webview,hwnd,hdc, x, y, cx, cy):
+    """webview透明绘制 
+
+
+    """
     rectDest=Rect()
     windll.user32.GetClientRect(hwnd,byref(rectDest))
     windll.user32.OffsetRect(byref(rectDest),-rectDest.Left,-rectDest.Top)
@@ -184,16 +186,19 @@ def wkeTransparentPaint(webview,hwnd,hdc, x, y, cx, cy):
     return
     
 
-def wkeEventOnPaint(webview,param,hdc,x,y,cx,cy):
+def wkeEventOnPaint(context,hdc,x,y,cx,cy):
+    """webview绘制事件的绑定
+
+
+    """
+
     #hdc=kwargs['hdc']
     #x=kwargs['x']
     #y=kwargs['y']
     #cx=kwargs['cx']
     #cy=kwargs['cy']
-
-    if param==None:
-        return
-    hwnd=param
+    hwnd=context["param"]
+    webview = context["webview"]
     if (windll.user32.GetWindowLongW(hwnd,WkeConst.GWL_EXSTYLE) & WkeConst.WS_EX_LAYERED)== WkeConst.WS_EX_LAYERED:
         wkeTransparentPaint(webview,hwnd, hdc, x, y, cx, cy)
     else:
@@ -207,6 +212,10 @@ class Timer:
         self.timer_func_dict={}
 
     def setTimer(self,hwnd,nid,dwTime,is_timer_one=True):
+        """
+
+
+        """
         self.is_timer_one=is_timer_one
         return windll.user32.SetTimer (hwnd,nid, dwTime, self._timerCallBack)
     
@@ -222,7 +231,84 @@ class Timer:
 
 
 
-class HwndProcAdapter():
+  
+def wkePumpMessages(block=False):
+    """循环提取分发当前线程的所有窗口消息
+    
+    Args:
+        block(bool) : True使用GetMessageA阻塞式/False使用PeekMessageA非阻塞式并配合休眠
+    """
+    msg = MSG()
+    if block == True:
+        while True:
+            res = windll.user32.GetMessageA(byref(msg), None, 0, 0)
+            if  res != 0:
+                windll.user32.TranslateMessage(byref(msg))
+                windll.user32.DispatchMessageA(byref(msg))
+            elif res == 0:
+                windll.user32.TranslateMessage(byref(msg))
+                windll.user32.DispatchMessageA(byref(msg))
+                break
+            else:
+                raise RuntimeError(f"GetMessage {res}")
+    else:
+        while True:
+            res = windll.user32.PeekMessageA(byref(msg), None,0, 0, 1)
+            if  res != 0:
+                windll.user32.TranslateMessage(byref(msg))
+                windll.user32.DispatchMessageA(byref(msg))
+                if msg.message in[WM_QUIT]: 
+                    break
+            else:
+                time.sleep(0.05)
+    return
+
+
+class HwndMsgAdapter():
+    """窗口消息适配器
+
+        HwndProcAdapter使用自身的消息处理流程替换指定父窗口的消息处理，接受外部注册的python函数处理指定的消息。
+        
+        替换后对于已经注册的消息,使用注册函数来响应,如果函数返回None,则继续调用父窗口的默认消息处理流程,若不为None则不调用;对于没注册的消息则使用父窗口的默认消息处理流程。
+
+        注册的消息响应函数可以有1~5个参数,如下:
+
+        ============      ======      ======      ======      ======
+            Arg1           Arg2        Arg3        Arg4        Arg5
+        ------------      ------      ------      ------      ------
+        webview           hwnd        msg         wParam      lParam
+        self              hwnd        msg         wParam      lParam
+        hwnd              msg         wParam      lParam
+        hwnd              wParam      lParam
+        wParam            lParam
+        self  
+        hwnd    
+        ============      ======      ======      ======      ======
+        
+        *HwndProcAdapter的消息处理流程调用注册的消息响应函数时:*
+        
+            * hwnd/msg/wParam/lParam 使用父窗口的处理流程的句柄/消息/参数带入
+            * 5个参数时,第一个参数名为self或webview,self则对应HwndProcAdapter类实例带入,webview对应HwndProcAdapter类实例的webview属性带入
+            * 1个参数时,同上,参数名为其他时,以消息窗口句柄hwnd带入
+
+        Examples:
+            .. code:: python      
+
+                x,y,w,h = 0,0,640,480
+                hwnd = createWindow('Window',x,y,w,h)
+                webview.build(hwnd,x,y,w,h)   
+                
+                a = HwndMsgAdapter()
+                def wkeMsgProcQuit(webview,hwnd,msg,wParam,lParam):
+                    win32gui.PostQuitMessage(0)
+                    return 
+                a.registerMsgProc(WM_SIZE,wkeMsgProcResize)
+                a.registerMsgProc(WM_DESTROY,wkeMsgProcQuit)
+                a.attach(hwnd,webview)
+                webview.loadURL("http://192.168.1.1")
+                ....
+
+    """
     def __init__(self,hwnd=0,webview=None):
         self.webview=webview
         self.hwnd=hwnd
@@ -233,6 +319,12 @@ class HwndProcAdapter():
         return
     
     def registerMsgProc(self,msg,func):
+        """为指定的消息注册指定的处理函数
+
+        Keyword Args:
+            msg(int):         注册的消息
+            func(function):    为该消息注册的响应函数
+        """
         if isinstance(msg,list):
             for m in msg:
                 self.msgProcEntries[m]=func
@@ -241,8 +333,13 @@ class HwndProcAdapter():
         return
 
   
-
     def attach(self,hwnd=0,webview=None):
+        """加载替换父窗口的消息响应流程
+
+        Keyword Args:
+            hwnd(int):  父窗口句柄
+            webview(WebView):   父窗口对应的WebView/WebWindow网页对象
+        """
         if hwnd is not None:
             self.hwnd = hwnd
         if webview is not None:
@@ -258,6 +355,9 @@ class HwndProcAdapter():
         return
     
     def detach(self):
+        """卸载替换父窗口的消息响应流程
+
+        """
         if self.attached == True:
             cb = CFUNCTYPE(_LRESULT, _LRESULT,_LRESULT,_LRESULT)
             self.oldHwndProc = replaceHWndProc(self.hwnd,cast(self.oldHwndProc,cb))
@@ -272,7 +372,9 @@ class HwndProcAdapter():
 
             if argcount==5:
                 arg_vals=self.msgProcEntries[msg].__code__.co_varnames
-                if arg_vals[0] in ['self','webview']:
+                if arg_vals[0] in ['self']:
+                    ret=self.msgProcEntries[msg](self,hwnd,msg,wParam, lParam)
+                elif arg_vals[0] in ['webview']:
                     ret=self.msgProcEntries[msg](self.webview,hwnd,msg,wParam, lParam)
                 else:
                     raise WkeCallbackError(f"Not support arg {arg_vals[0]}")
@@ -287,7 +389,12 @@ class HwndProcAdapter():
                 ret=self.msgProcEntries[msg](wParam, lParam)
 
             elif argcount==1:
-                ret=self.msgProcEntries[msg](hwnd)
+                arg_vals=self.msgProcEntries[msg].__code__.co_varnames
+                if arg_vals[0] in ['self']:
+                    ret=self.msgProcEntries[msg](self)
+                else:
+                    ret=self.msgProcEntries[msg](hwnd)
+
             else:
                 raise WkeCallbackError(f"Not support {argcount} args")
 

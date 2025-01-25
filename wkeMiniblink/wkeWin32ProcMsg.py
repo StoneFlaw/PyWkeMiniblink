@@ -28,7 +28,7 @@ from win32con import *
 
 
 from . import _LRESULT,WkeCallbackError
-from .wke import Wke,Webview
+from .wke import Wke,WebView
 from .wkeStruct import *
 
 from .wkeWin32 import *
@@ -327,10 +327,10 @@ def wkeMsgProcPaint(webview,hwnd,msg,wParam,lParam):
         """
     return
 
-class WebviewWithProcHwnd(Webview):
+class WebViewWithProcHwnd(WebView):
     def __init__(self,isTransparent=False,isZoom=True):
         super().__init__()
-        self.hwndProcAdapter = HwndProcAdapter()
+        self.hwndMsgAdapter = HwndMsgAdapter()
         self.isZoom=isZoom
         self.isTransparent = isTransparent
         return
@@ -350,24 +350,24 @@ class WebviewWithProcHwnd(Webview):
 
         Wke.event.onPaintUpdated(self,wkeEventOnPaint,param=self.hwnd)
 
-        self.hwndProcAdapter.registerMsgProc(WM_SIZE,wkeMsgProcResize)
-        self.hwndProcAdapter.registerMsgProc(WM_PAINT,wkeMsgProcPaint)
-        self.hwndProcAdapter.registerMsgProc(WM_DESTROY,wkeMsgProcQuit)
-        self.hwndProcAdapter.registerMsgProc(WM_KEYDOWN,wkeMsgProcKeyDown)
-        self.hwndProcAdapter.registerMsgProc(WM_KEYUP,wkeMsgProcKeyUp)
-        self.hwndProcAdapter.registerMsgProc(WM_CHAR,wkeMsgProcChar)
-        self.hwndProcAdapter.registerMsgProc(WM_ERASEBKGND,wkeMsgProcEraseBackground)
-        self.hwndProcAdapter.registerMsgProc(WM_INPUTLANGCHANGE,wkeMsgProcInputLangChange)
-        self.hwndProcAdapter.registerMsgProc([WM_LBUTTONDOWN,WM_MBUTTONDOWN,WM_RBUTTONDOWN,WM_LBUTTONDBLCLK,WM_MBUTTONDBLCLK,WM_RBUTTONDBLCLK,WM_LBUTTONUP,WkeConst.WM_MBUTTONUP,WkeConst.WM_RBUTTONUP],wkeMsgProcMouseClick)
-        self.hwndProcAdapter.registerMsgProc(WM_MOUSEMOVE,wkeMsgProcMouseMove)
-        self.hwndProcAdapter.registerMsgProc(WM_MOUSEWHEEL,wkeMsgProcMouseWheel)
-        self.hwndProcAdapter.registerMsgProc(WM_CONTEXTMENU,wkeMsgProcMouseContextMenu)
-        self.hwndProcAdapter.registerMsgProc(WM_NCHITTEST,wkeMsgProcNchiTest)
-        self.hwndProcAdapter.registerMsgProc(WM_SETCURSOR,wkeMsgProcSetCursor)
-        self.hwndProcAdapter.registerMsgProc(WM_SETFOCUS,wkeMsgProcSetFocus)
-        self.hwndProcAdapter.registerMsgProc(WM_KILLFOCUS,wkeMsgProcKillFocus)
-        self.hwndProcAdapter.registerMsgProc(WM_IME_STARTCOMPOSITION,wkeMsgProcStartComposition)
-        self.hwndProcAdapter.attach(self.hwnd,self)
+        self.hwndMsgAdapter.registerMsgProc(WM_SIZE,wkeMsgProcResize)
+        self.hwndMsgAdapter.registerMsgProc(WM_PAINT,wkeMsgProcPaint)
+        self.hwndMsgAdapter.registerMsgProc(WM_DESTROY,wkeMsgProcQuit)
+        self.hwndMsgAdapter.registerMsgProc(WM_KEYDOWN,wkeMsgProcKeyDown)
+        self.hwndMsgAdapter.registerMsgProc(WM_KEYUP,wkeMsgProcKeyUp)
+        self.hwndMsgAdapter.registerMsgProc(WM_CHAR,wkeMsgProcChar)
+        self.hwndMsgAdapter.registerMsgProc(WM_ERASEBKGND,wkeMsgProcEraseBackground)
+        self.hwndMsgAdapter.registerMsgProc(WM_INPUTLANGCHANGE,wkeMsgProcInputLangChange)
+        self.hwndMsgAdapter.registerMsgProc([WM_LBUTTONDOWN,WM_MBUTTONDOWN,WM_RBUTTONDOWN,WM_LBUTTONDBLCLK,WM_MBUTTONDBLCLK,WM_RBUTTONDBLCLK,WM_LBUTTONUP,WkeConst.WM_MBUTTONUP,WkeConst.WM_RBUTTONUP],wkeMsgProcMouseClick)
+        self.hwndMsgAdapter.registerMsgProc(WM_MOUSEMOVE,wkeMsgProcMouseMove)
+        self.hwndMsgAdapter.registerMsgProc(WM_MOUSEWHEEL,wkeMsgProcMouseWheel)
+        self.hwndMsgAdapter.registerMsgProc(WM_CONTEXTMENU,wkeMsgProcMouseContextMenu)
+        self.hwndMsgAdapter.registerMsgProc(WM_NCHITTEST,wkeMsgProcNchiTest)
+        self.hwndMsgAdapter.registerMsgProc(WM_SETCURSOR,wkeMsgProcSetCursor)
+        self.hwndMsgAdapter.registerMsgProc(WM_SETFOCUS,wkeMsgProcSetFocus)
+        self.hwndMsgAdapter.registerMsgProc(WM_KILLFOCUS,wkeMsgProcKillFocus)
+        self.hwndMsgAdapter.registerMsgProc(WM_IME_STARTCOMPOSITION,wkeMsgProcStartComposition)
+        self.hwndMsgAdapter.attach(self.hwnd,self)
 
         return 
     
