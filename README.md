@@ -1,6 +1,6 @@
 # 简介
 
-PyWkeMiniblink 是 [Miniblink](https://weolar.github.io/miniblink/)的Python绑定，参考源自上游项目[MBPython](https://github.com/lochen88/MBPython)。
+PyWkeMiniblink 是 [Miniblink](https://weolar.github.io/miniblink/)的Python绑定，参考自上游项目[MBPython](https://github.com/lochen88/MBPython)。
 
 Miniblink 是 chromium的精简版，裁剪了对于排版渲染没啥大用的如音视频功能。
 
