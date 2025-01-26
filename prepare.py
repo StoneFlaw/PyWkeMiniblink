@@ -52,7 +52,7 @@ def prepare():
     if os.path.exists("README.md"):
         os.remove("README.md")
 
-    shutil.copyfile("documents/source/README.md","README.md")
+    shutil.copyfile("docs/source/README.md","README.md")
     return
 
 def clean():
