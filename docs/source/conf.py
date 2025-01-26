@@ -16,7 +16,7 @@ release = '0.1.1'
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 import os
 import sys
-sys.path.insert(0, os.path.abspath(r'..\\..\\'))
+sys.path.insert(0, os.path.abspath(r'../../'))
 
 extensions = ['sphinx.ext.autodoc', 
     #'sphinx_better_include',  # 引入 sphinx-better-include 插件

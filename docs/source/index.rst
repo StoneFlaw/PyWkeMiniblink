@@ -27,8 +27,7 @@ PyWkeMiniblink documentation
 
    MiniblinkAPI.md
 
-   Miniblink API DOC.html
-   
+
 Indices and tables
 ==================
 
