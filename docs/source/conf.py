@@ -46,3 +46,5 @@ napoleon_google_docstring = True
 
 #打开TODO词条
 todo_include_todos = True
+
+autodoc_mock_imports = ['windll']
