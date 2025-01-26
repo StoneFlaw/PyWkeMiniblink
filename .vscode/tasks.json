@@ -61,7 +61,7 @@
         {
             "label": "生成文档Sphinx Build",
             "type": "shell",
-            "command": "cd documents ; sphinx-build source/ build/",
+            "command": "cd docs ; sphinx-build source/ build/",
             "args": [],
             "echo": true,  
             "presentation":{
