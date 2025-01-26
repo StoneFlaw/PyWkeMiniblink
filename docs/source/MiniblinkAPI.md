@@ -1,10 +1,8 @@
 ## Miniblink 简介
 
-Miniblink 是 chromium的精简版,裁剪了对于排版渲染没啥大用的如音视频功能,移植使用了VC6的CRT。
+Miniblink 是 chromium的精简版,删除了音视频功能,移植使用了VC6的CRT。
 
 [Miniblink GitHub地址](https://github.com/weolar/miniblink49)
-
-原作者文档:https://miniblink.net/views/doc/index.html
 
 > miniblink使用了wke的接口。wke的相关介绍可以google一下。
 >

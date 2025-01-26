@@ -1,10 +1,10 @@
 # 简介
 
-PyWkeMiniblink 是 [Miniblink](https://weolar.github.io/miniblink/)的Python绑定，参考源自上游项目[MBPython](https://github.com/lochen88/MBPython)。
+PyWkeMiniblink：[项目地址](https://github.com/StoneFlaw/PyWkeMiniblink)  [项目在线文档](https://pywkeminiblink.readthedocs.io/zh-cn/latest/)
 
-Miniblink 是 chromium的精简版，裁剪了对于排版渲染没啥大用的如音视频功能。
+PyWkeMiniblink 是 [Miniblink](https://weolar.github.io/miniblink/)的Python绑定，参考源了上游项目[MBPython](https://github.com/lochen88/MBPython)。
 
-
+Miniblink 是 chromium的精简版，删除了音视频功能,原接口参见[官方接口文档](https://miniblink.net/views/doc/index.html),更完整的参见docs/source/wke.h 。
 
 # 使用
 
@@ -18,7 +18,7 @@ pip3 install WkeMiniblink-xx-py3-none-any.whl
 
 ## 发布
 
-pyinstall
+pyinstaller
 
 ## 示例
 
@@ -208,7 +208,7 @@ Example:
 
 ###  事件处理函数func(context,*args,**kwargs)
 
-​		经WkeEvent的翻译，传递给事件响应函数的上下文context：
+​		经WkeEvent的翻译，传递给事件响应函数的上下文context是个字典，如下：
 
 ```python
 context = {"id":eventid,"param":param,"func":func,"webview":webview,"id":webview.cId,"event":event}
@@ -237,9 +237,12 @@ webview.showWindow(True)
 Wke.runMessageLoop()  
 ```
 
-Webview绑定了一系列翻译方法，实现形如:
+Webview绑定了一系列翻译方法，实现下面二者等价:
 
-​		`webview.OnPaintEvent(param,*args,**kwargs）-> Wke.event.OnPaintEvent(webview,param,*args,**kwargs）`
+```python
+Wke.event.OnPaintEvent(webview,param,*args,**kwargs）
+webview.OnPaintEvent(param,*args,**kwargs）
+```
 
 unittest/testWebViewOnEvent.py检查WkeEvent所有事件是否在WebView都有对应的绑定实现，并生成所需要的实现翻译代码。
 
@@ -262,4 +265,10 @@ WebView.bind(父窗口hwnd,x,y,w,h)在一个已经创建的父窗口hwnd上绑�
 # TODO
 
 Wke/WebView的job/request有些地方未修订验证
+
+pyinstaller尚未调整和验证
+
+Timer尚未验证
+
+# [Contact Us](mailto://wyh917@163.com)
 

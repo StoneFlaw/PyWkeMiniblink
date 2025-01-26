@@ -48,4 +48,4 @@ napoleon_google_docstring = True
 todo_include_todos = True
 
 #readthedocs.io只支持Linux Docker,没有windll,声明ctypes.windll为Mock
-autodoc_mock_imports = ['windll','ctypes.windll']
+autodoc_mock_imports = ['windll','ctypes.windll','win32gui','win32api','win32con']

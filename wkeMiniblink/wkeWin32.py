@@ -10,8 +10,7 @@ from ctypes import (
     c_void_p,
     windll,
     byref,
-    CFUNCTYPE,
-    WINFUNCTYPE
+    CFUNCTYPE
 )
 from ctypes.wintypes import (RGB,MSG,
     DWORD,
@@ -219,8 +218,9 @@ class Timer:
         self.is_timer_one=is_timer_one
         return windll.user32.SetTimer (hwnd,nid, dwTime, self._timerCallBack)
     
-    @WkeMethod(WINFUNCTYPE(c_void_p,HWND,c_void_p,UINT,DWORD))
+    @WkeMethod(CFUNCTYPE(c_void_p,HWND,c_void_p,UINT,DWORD))
     def _timerCallBack(self,hwnd,msg,nid,dwTime):
+        #WINFUNCTYPE/CFUNCTYPE?
         if hasattr(self,'timerCallBack'):
             if self.is_timer_one:
                 self.timerCallBack(hwnd=hwnd,msg=msg,nid=nid,dwTime=dwTime)

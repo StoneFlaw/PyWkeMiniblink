@@ -12,8 +12,7 @@ from ctypes import (
     c_void_p,
     windll,
     byref,
-    CFUNCTYPE,
-    WINFUNCTYPE
+    CFUNCTYPE
 )
 from ctypes.wintypes import (RGB,
     DWORD,
