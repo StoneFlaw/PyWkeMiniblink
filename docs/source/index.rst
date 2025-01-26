@@ -12,9 +12,7 @@ PyWkeMiniblink documentation
    :maxdepth: 1
    :caption: 使用手册
 
-
-
-   ../README.md
+   README.md
 
 
 .. toctree::
@@ -29,6 +27,8 @@ PyWkeMiniblink documentation
 
    MiniblinkAPI.md
 
+   Miniblink API DOC.html
+   
 Indices and tables
 ==================
 
