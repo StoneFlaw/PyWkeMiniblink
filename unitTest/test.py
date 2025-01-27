@@ -7,6 +7,11 @@ from pprint import pformat
 import random
 import unittest
 
+from importlib import reload
+
+reload(sys)
+sys.setdefaultencoding( "utf-8" )
+
 current_folder = Path(__file__).absolute().parent
 father_folder = str(current_folder.parent)
 os.chdir(str(current_folder))

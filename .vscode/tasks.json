@@ -17,6 +17,17 @@
             }
         },
         {
+            "label": "unitTest",
+            "type": "shell",
+            "command": "python -m unittest discover -s unitTest", //暂时有问题
+            "args": [],
+            "echo": true,  
+            "presentation":{
+                "reveal":"always",
+                "panel":"shared"
+                },
+        },
+        {
             "label": "生成安装包",
             "type": "shell",
             "command": "python setup.py sdist bdist_wheel",

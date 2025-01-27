@@ -9,7 +9,7 @@ PyWkeMiniblink documentation
 
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 4
    :caption: 使用手册
 
    README.md
