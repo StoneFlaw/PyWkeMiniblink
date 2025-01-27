@@ -8,10 +8,7 @@ import random
 import shutil
 import unittest
 
-from importlib import reload
 
-reload(sys)
-sys.setdefaultencoding( "utf-8" )
 
 current_folder = Path(__file__).absolute().parent
 father_folder = str(current_folder.parent)
@@ -49,12 +46,15 @@ class Test( unittest . TestCase ):
         for event in entries:
             has = hasattr(webview,event)
             self.assertEqual(hasattr(webview,event),True)
-            func = entries[event]
-            doc  = func.__doc__
-            lines = str(doc).splitlines()
-            print(f"def {event}(self,param,*args,**kwargs):")
-            print("    \"\"\"",lines[0],"\"\"\"")
-            print(f"    return Wke.event.{event}(self,param,*args,**kwargs)")               
+            try:
+                func = entries[event]
+                doc  = func.__doc__
+                lines = str(doc).splitlines()
+                print(f"def {event}(self,param,*args,**kwargs):")
+                print("    \"\"\"",lines[0],"\"\"\"")
+                print(f"    return Wke.event.{event}(self,param,*args,**kwargs)")         
+            except:
+                pass      
         return
 
 

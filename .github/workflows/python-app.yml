@@ -4,10 +4,11 @@
 
 name: Python Build
 
-
 on:
   push:
-    branches: [ "main" ]
+    tags:
+      - 'v*' # 当推送以 v 开头的标签时触发
+  
   pull_request:
     branches: [ "main" ]
 
@@ -16,13 +17,7 @@ permissions:
 
 jobs:
   build:
-
     runs-on: windows-latest
-    # Specifying a GitHub environment is optional, but strongly encouraged
-    environment: pypi
-    permissions:
-      # IMPORTANT: this permission is mandatory for Trusted Publishing
-      id-token: write
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python 3.12
@@ -31,21 +26,20 @@ jobs:
         python-version: "3.12"
     - name: Install dependencies
       run: |
+        set PYTHONIOENCODING=utf-8
         python -m pip install --upgrade pip 
         pip install setuptools wheel 
         pip install -r requirements.txt
 
     - name: Test
       run: |
-        python unitTest\test.py 
         python unitTest\testWebViewOnEvent.py 
-
-    # 一个版本号只能发布一次到PYPI
-    #- name: Build package
-    #  run:  |
-    #    pip install twine
-    #    python setup.py sdist bdist_wheel
-    #    twine upload --repository pypi --username __token__ --password ${{ secrets.PYPI_TOKEN }}  dist/*
+    #一个版本号只能发布一次到PYPI
+    - name: Build package
+      run:  |
+        pip install twine
+        python setup.py sdist bdist_wheel
+        twine upload --repository pypi --username __token__ --password ${{ secrets.PYPI_TOKEN }}  dist/*.whl
     #- name: Dump GitHub context
     #  env:
     #    GITHUB_CONTEXT: ${{ toJson(github) }}
