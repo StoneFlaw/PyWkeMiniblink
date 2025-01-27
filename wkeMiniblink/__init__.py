@@ -16,8 +16,10 @@ MINIBLINK_DLL_HANDLE=None
 miniblink_core_dll = '\\miniblink.dll'
 if bit == '64bit':
     from ctypes import c_longlong
+    miniblink_core_dll = '\\miniblink_4975_x64.dll'
     _LRESULT=c_longlong
 else:
+    miniblink_core_dll = '\\miniblink_4975_x32.dll'
     _LRESULT=c_int
 
 def SetMiniblinkDLL(dll):

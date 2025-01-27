@@ -17,9 +17,9 @@
             }
         },
         {
-            "label": "制作安装包",
+            "label": "生成制作安装包",
             "type": "shell",
-            "command": "python setup.py bdist_wheel",
+            "command": "python setup.py sdist bdist_wheel",
             "echo": true,  
             "options": {
                 "env": {
@@ -36,7 +36,7 @@
                 }
         },
         {
-            "label": "生成完整安装包",
+            "label": "制作wheel安装包",
             "type": "shell",
             "command": "pip ",
             //"command": "python setup.py bdist_wheel",

@@ -43,11 +43,13 @@ def prepare():
 
     # 打开.zip文件并解压缩
     with zipfile.ZipFile(src_file, 'r') as zip_ref:
-        tar_dll = zip_ref.extract(dllName,tar_dir)
+        tar_dll = zip_ref.extract("miniblink_4975_x32.dll",tar_dir)
         print(f'    文件 {src_file} 已成功解压缩到 {tar_dir} as [{tar_dll}]')
 
-        shutil.move(tar_dll,tar_file)
-        print(f'    文件 {tar_dll} =>{tar_file}')
+    with zipfile.ZipFile(src_file, 'r') as zip_ref:
+        tar_dll = zip_ref.extract("miniblink_4975_x64.dll",tar_dir)
+        print(f'    文件 {src_file} 已成功解压缩到 {tar_dir} as [{tar_dll}]')
+  
     
     if os.path.exists("README.md"):
         os.remove("README.md")
