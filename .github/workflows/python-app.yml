@@ -42,4 +42,6 @@ jobs:
     - name: Dump GitHub context
       env:
         GITHUB_CONTEXT: ${{ toJson(github) }}
-      run: echo "$GITHUB_CONTEXT"
+      run: |
+        echo "$GITHUB_CONTEXT"
+        echo "{{secerts.NAME}}"

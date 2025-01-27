@@ -17,7 +17,7 @@
             }
         },
         {
-            "label": "生成制作安装包",
+            "label": "生成安装包",
             "type": "shell",
             "command": "python setup.py sdist bdist_wheel",
             "echo": true,  
@@ -62,6 +62,21 @@
             "label": "生成文档Sphinx Build",
             "type": "shell",
             "command": "cd docs ; sphinx-build source/ build/",
+            "args": [],
+            "echo": true,  
+            "presentation":{
+                "reveal":"always",
+                "panel":"shared"
+                },
+            "group":{
+                "kind":"build",
+                "isDefault":false
+                }
+        },
+        {
+            "label": "发布到PYPI",
+            "type": "shell",
+            "command": "twine upload dist/*",//C:\Users<用户名>\.pypirc
             "args": [],
             "echo": true,  
             "presentation":{

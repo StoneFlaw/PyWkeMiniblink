@@ -1,6 +1,13 @@
 # 简介
 
-PyWkeMiniblink：[项目地址](https://github.com/StoneFlaw/PyWkeMiniblink)  [项目在线文档](https://pywkeminiblink.readthedocs.io/zh-cn/latest/)
+PyWkeMiniblink：
+
+[项目地址](https://github.com/StoneFlaw/PyWkeMiniblink)  
+
+[项目在线文档](https://pywkeminiblink.readthedocs.io/zh-cn/latest/)
+
+[PYPI](https://pypi.org/project/WkeMiniblink/)
+
 
 PyWkeMiniblink 是 [Miniblink](https://weolar.github.io/miniblink/)的Python绑定，参考源了上游项目[MBPython](https://github.com/lochen88/MBPython)。
 
