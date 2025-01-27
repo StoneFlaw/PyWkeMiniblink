@@ -1,12 +1,6 @@
 # 简介
 
-PyWkeMiniblink：
-
-[项目地址](https://github.com/StoneFlaw/PyWkeMiniblink)  
-
-[项目在线文档](https://pywkeminiblink.readthedocs.io/zh-cn/latest/)
-
-[PYPI](https://pypi.org/project/WkeMiniblink/)
+PyWkeMiniblink： [项目地址](https://github.com/StoneFlaw/PyWkeMiniblink)  /  [在线文档](https://pywkeminiblink.readthedocs.io/zh-cn/latest/)  / [PYPI主页](https://pypi.org/project/WkeMiniblink/)
 
 
 PyWkeMiniblink 是 [Miniblink](https://weolar.github.io/miniblink/)的Python绑定，参考源了上游项目[MBPython](https://github.com/lochen88/MBPython)。
@@ -20,7 +14,10 @@ Miniblink 是 chromium的精简版，删除了音视频功能,原接口参见[�
 ```shell
 #安装依赖pywin32
 pip3 install pywin32
+#安装本地文件xx版本
 pip3 install WkeMiniblink-xx-py3-none-any.whl
+#从PYPI安装
+pip3 install WkeMiniblink
 ```
 
 ## 发布

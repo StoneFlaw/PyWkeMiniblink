@@ -37,11 +37,10 @@ jobs:
 
     # retrieve your distributions here
     - name: Build package
-      run: python setup.py sdist bdist_wheel
-
-    - name: Dump GitHub context
-      env:
-        GITHUB_CONTEXT: ${{ toJson(github) }}
-      run: |
-        echo "$GITHUB_CONTEXT"
-        echo "{{secerts.NAME}}"
+      run:  |
+        python setup.py sdist bdist_wheel
+        twine upload --repository pypi --username __token__ --password ${{ secrets.PYPI_TOKEN }}  dist/*
+    #- name: Dump GitHub context
+    #  env:
+    #    GITHUB_CONTEXT: ${{ toJson(github) }}
+    #  run:  echo "$GITHUB_CONTEXT"

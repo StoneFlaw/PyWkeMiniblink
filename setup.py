@@ -14,7 +14,7 @@ with open('README.md', encoding='utf-8') as f:
 
 setup(
     name="WkeMiniblink",  # 项目名
-    version="0.1.2",  # 版本号
+    version="0.1.3",  # 版本号
 
     #自动搜索包含__init__.py的文件夹
     packages=find_packages(exclude=["dist.*", "dist", "tests.*", "tests","__pycache__/*"]),
@@ -48,9 +48,10 @@ setup(
         "Operating System :: Microsoft :: Windows",
     ],
     project_urls={
-        'Documentation': 'https://github.com/StoneFlaw/PyWkeMiniblink',
+        'Documentation': 'https://pywkeminiblink.readthedocs.io/zh-cn/latest/',
         'Source Code': 'https://github.com/StoneFlaw/PyWkeMiniblink',
         'Bug Tracker': 'https://github.com/StoneFlaw/PyWkeMiniblink/issues',
+        'Homepage': 'https://pypi.org/project/WkeMiniblink/',
     }
 
     # could also include long_description, download_url, classifiers, etc.
