@@ -50,11 +50,15 @@ def prepare():
         tar_dll = zip_ref.extract("miniblink_4975_x64.dll",tar_dir)
         print(f'    文件 {src_file} 已成功解压缩到 {tar_dir} as [{tar_dll}]')
   
-    
-    if os.path.exists("README.md"):
-        os.remove("README.md")
+    return
 
-    shutil.copyfile("docs/source/README.md","README.md")
+def doc():
+    """
+    """
+    shutil.copy2("README.md","docs/source/README.md")
+    print(f'    文件 README.md    => docs/source/README.md')
+    shutil.copy2("CHANGELOG.md","docs/source/CHANGELOG.md")  
+    print(f'    文件 CHANGELOG.md =>docs/source/CHANGELOG.md')
     return
 
 def clean():
@@ -76,6 +80,8 @@ if __name__=='__main__':
     
     if opt == 'prepare':
         prepare()
+    elif opt == 'doc':
+        doc()
     elif opt == 'clean':
         clean()
 

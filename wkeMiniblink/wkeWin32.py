@@ -37,10 +37,6 @@ PCOPYDATASTRUCT = POINTER(COPYDATASTRUCT)
 SetWindowLong = windll.user32.SetWindowLongA
 GetWindowLong = windll.user32.GetWindowLongA
 
-
-
-
-
 def wkeSetIcon(hwnd,filename):
     """为一个真实窗口绑定一个wkeWebWindow
 
@@ -246,7 +242,8 @@ class WkeTimer:
 
         Example:
             
-            .. code:: c
+            .. code:: python
+
                 #定时器消息回调函数
                 def timeCallback(*args,**kwargs):
                 global count
@@ -368,7 +365,8 @@ class WkeSnapShot():
 
         Example:
             
-            .. code:: c
+            .. code:: python
+
                 webview = WebWindow()
                 webview.create(0,0,0,800,600)
                 snap = WkeSnapShot()

@@ -244,11 +244,23 @@ Wke.runMessageLoop()
 Webview绑定了一系列翻译方法，实现下面二者等价:
 
 ```python
-Wke.event.OnPaintEvent(webview,param,*args,**kwargs）
-webview.OnPaintEvent(param,*args,**kwargs）
+Wke.event.OnPaintEvent(webview,param,*args,**kwargs)
+webview.OnPaintEvent(param,*args,**kwargs)
 ```
 
 unittest/testWebViewOnEvent.py检查WkeEvent所有事件是否在WebView都有对应的绑定实现，并生成所需要的实现翻译代码。
+
+
+
+## 其它WkeWin32
+
+WkeWin32包含了Win32相关下面的辅助方法：
+
+wkeSetIcon/wkeCreateWindow/wkeCreateTransparentWindow/wkeSetWindowLongHook/wkeGetWindowLongHook 等方法;
+
+定时类WkeTimer/截屏类WkeSnapShot
+
+
 
 # Javascript 集成
 
@@ -272,7 +284,7 @@ Wke/WebView的job/request有些地方未修订验证
 
 pyinstaller尚未调整和验证
 
-Timer尚未验证
+
 
 # [Contact Us](mailto://wyh917@163.com)
 

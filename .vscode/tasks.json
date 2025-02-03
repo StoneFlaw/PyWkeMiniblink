@@ -70,7 +70,7 @@
         {
             "label": "生成文档Sphinx Build",
             "type": "shell",
-            "command": "cd docs ; sphinx-build source/ build/",
+            "command": "python prepare.py doc & cd docs & sphinx-build source/ build/",
             "args": [],
             "echo": true,  
             "presentation":{

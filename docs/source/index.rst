@@ -21,12 +21,20 @@ PyWkeMiniblink documentation
 
    modules.rst
 
+
+   
 .. toctree::
    :maxdepth: 2
    :caption: Miniblink
 
    MiniblinkAPI.md
 
+
+.. toctree::
+   :maxdepth: 1
+   :caption: 改动历史
+   
+   CHANGELOG.md
 
 Indices and tables
 ==================
