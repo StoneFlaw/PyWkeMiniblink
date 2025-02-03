@@ -3,9 +3,10 @@
 import os,sys,platform,time
 import json
 from threading import  Lock,Event,Thread
+from struct import pack
 
 from ctypes import (cast,c_char_p,py_object,sizeof,byref,string_at,create_string_buffer,POINTER)
-from ctypes import (c_uint32,c_int32)
+from ctypes import (c_uint32,c_int32,c_ulong)
 from ctypes import (
     c_void_p,
     windll,
@@ -22,7 +23,9 @@ from ctypes.wintypes import (RGB,MSG,
 import win32gui
 import win32api
 from win32con import *
-
+import win32ui
+import win32con
+import zlib
 
 from . import _LRESULT,WkeCallbackError
 from .wke import Wke,WebView
@@ -38,7 +41,7 @@ GetWindowLong = windll.user32.GetWindowLongA
 
 
 
-def setIcon(hwnd,filename):
+def wkeSetIcon(hwnd,filename):
     """为一个真实窗口绑定一个wkeWebWindow
 
     Args:
@@ -59,7 +62,7 @@ def setIcon(hwnd,filename):
     win32api.SendMessage(hwnd, WkeConst.WM_SETICON,WkeConst.ICON_BIG, icon)
     return True
 
-def createWindow(title="",x=0,y=0,w=640,h=480,className='Miniblink'):
+def wkeCreateWindow(title="",x=0,y=0,w=640,h=480,className='Miniblink'):
     """创建窗口
 
     Args:   
@@ -79,7 +82,7 @@ def createWindow(title="",x=0,y=0,w=640,h=480,className='Miniblink'):
     hwnd = win32gui.CreateWindowEx(0, reg,title,WS_OVERLAPPEDWINDOW,x,y,w,h, 0, 0, 0, None)
     return hwnd
 
-def createTransparentWindow(title="",x=0,y=0,w=640,h=480,className='Miniblink'):
+def wkeCreateTransparentWindow(title="",x=0,y=0,w=640,h=480,className='Miniblink'):
     """创建透明窗口
 
     Args:   
@@ -101,7 +104,7 @@ def createTransparentWindow(title="",x=0,y=0,w=640,h=480,className='Miniblink'):
     return hwnd
 
 
-def setWindowLongHook(hwnd,ex,index = WkeConst.GWL_USERDATA):
+def wkeSetWindowLongHook(hwnd,ex,index = WkeConst.GWL_USERDATA):
     """在窗口的私有数据上挂靠一个python对象 
 
     Args:   
@@ -114,7 +117,7 @@ def setWindowLongHook(hwnd,ex,index = WkeConst.GWL_USERDATA):
     SetWindowLong(hwnd,index,cPtrOfPyobj)
     return
 
-def getWindowLongHook(hwnd,index = WkeConst.GWL_USERDATA):
+def wkeGetWindowLongHook(hwnd,index = WkeConst.GWL_USERDATA):
     """在窗口的私有数据上获取一个python对象
 
     Args:   
@@ -133,7 +136,7 @@ def getWindowLongHook(hwnd,index = WkeConst.GWL_USERDATA):
     return obj
 
 
-def replaceHWndProc(hwnd,newHwndProc):
+def wkeReplaceHWndProc(hwnd,newHwndProc):
     """替换窗口消息处理过程
 
     Args:   
@@ -146,6 +149,7 @@ def replaceHWndProc(hwnd,newHwndProc):
     if newHwndProc:
        win32gui.SetWindowLong(hwnd, WkeConst.GWL_WNDPROC, newHwndProc)
     return oldHwndProc
+
 
 
     
@@ -205,33 +209,6 @@ def wkeEventOnPaint(context,hdc,x,y,cx,cy):
         windll.user32.InvalidateRect(hwnd, byref(rc), True)
     return
 
-
-class Timer:
-    def __init__(self):
-        self.timer_func_dict={}
-
-    def setTimer(self,hwnd,nid,dwTime,is_timer_one=True):
-        """
-
-
-        """
-        self.is_timer_one=is_timer_one
-        return windll.user32.SetTimer (hwnd,nid, dwTime, self._timerCallBack)
-    
-    @WkeMethod(CFUNCTYPE(c_void_p,HWND,c_void_p,UINT,DWORD))
-    def _timerCallBack(self,hwnd,msg,nid,dwTime):
-        #WINFUNCTYPE/CFUNCTYPE?
-        if hasattr(self,'timerCallBack'):
-            if self.is_timer_one:
-                self.timerCallBack(hwnd=hwnd,msg=msg,nid=nid,dwTime=dwTime)
-                windll.user32.KillTimer(hwnd,nid)
-                return 0
-            return self.timerCallBack(hwnd=hwnd,msg=msg,nid=nid,dwTime=dwTime)
-        
-
-
-
-  
 def wkePumpMessages(block=False):
     """循环提取分发当前线程的所有窗口消息
     
@@ -262,6 +239,378 @@ def wkePumpMessages(block=False):
             else:
                 time.sleep(0.05)
     return
+
+class WkeTimer:
+    """定时器
+        Win32定时器的接口对象,可以指定定时器的对应窗口/ID/周期/响应函数
+
+        Example:
+            
+            .. code:: c
+                #定时器消息回调函数
+                def timeCallback(*args,**kwargs):
+                global count
+                count = count+1
+                if count>=9:
+                    owner = kwargs["owner"]
+                    owner.stop()
+                    win32gui.PostQuitMessage(0)
+                return
+
+                t = WkeTimer()    
+                t.init(timeCallback,None,0,3000)
+                t.start()
+                Wke.runMessageLoop()       
+
+    """
+    def __init__(self,func=None,hwnd=0,nIDEvent=0,msElapse=0):
+        """
+            对应的C API
+            UINT_PTR SetTimer(
+                HWND hWnd,          # 窗口句柄
+                UINT_PTR nIDEvent,  # 定时器ID
+                UINT msElapse,       # 时间间隔，单位为毫秒
+                TIMERPROC lpTimerFunc  # 回调函数指针
+            );
+
+            如果函数成功，且hWnd参数为0，则返回新建立的时钟编号，可以将这个时钟编号传递给KillTimer来销毁时钟。
+            如果函数成功，且hWnd参数为非0，则返回一个非零的整数，可以将这个非零的整数传递给KillTimer来销毁时钟。
+            如果函数失败，返回值为零。若想获得更多的错误信息，可以调用GetLastError函数。
+
+            lpTimerFunc是WM_TIMER的处理函数,可以NULL，这样变成定时的WM_TIMER消息。
+            
+        """
+        self._kid = 0
+      
+        self.init(func,hwnd,nIDEvent,msElapse)
+        return
+
+    def __del__(self):
+        if self._kid:
+            self.stop()
+        return
+    
+    def init(self,func=None,hwnd=0,nIDEvent=0,msElapse=0):
+        """ 初始化定时器
+
+        Args:
+            func(function): 定时器响应函数指针
+            hwnd(int):      定时器所在窗口句柄
+            nIDEvent(int):  定时器ID
+            msElapse(int):  时间间隔，单位为毫秒
+
+        定时器响应函数格式:         def timerCallback(hwnd, msg, id, time) 返回值None
+
+        """
+        if self._kid != 0 :
+            raise SyntaxError("Timer was not killed before init!")
+        self.hwnd = hwnd
+        self.nIDEvent = nIDEvent
+        self.msElapse = msElapse
+        self.func = func
+        self._kid = 0
+        self.context={"hwnd":hwnd,"id":self.nIDEvent,"period":self.msElapse}
+        return
+
+    @WkeMethod(CFUNCTYPE(c_void_p,HWND,c_void_p,UINT,DWORD))
+    def timeCallback(self,hwnd, msg, id, time):
+        return self.func(hwnd, msg, id, time,owner=self)
+    
+    @property
+    def period(self):
+        return self.msElapse
+    
+    def start(self):
+        """ 启动定时器
+
+        Returns:
+            int:     返回非0启动成功，返回0启动失败
+        """    
+        if self.func == None or not callable(self.func):
+            "只是定时触发WM_TIMER"
+            func = None
+        else:
+            func = self.timeCallback
+        
+        #注意如果HWND为NULL的时候，第二个nIDEvent参数无效
+        if self.hwnd == None:
+            self.nIDEvent = 0
+            #注意如果HWND为NULL的时候，第二个nIDEvent参数无效，即不能再timer的响应函数中通过ID判断不同的定时器
+            ret =  windll.user32.SetTimer(self.hwnd,self.nIDEvent, self.msElapse,func)
+            if ret!=0:
+                self.started = True
+                #关闭时要用返回的计时器编号
+                self._kid = ret
+                return True
+        else:
+            ret =  windll.user32.SetTimer(self.hwnd,self.nIDEvent, self.msElapse,func)
+            if ret!=0:                    
+                self._kid = ret
+                return True
+    
+        return False
+    
+    def stop(self):
+        """ 停止定时器
+        """
+        if self._kid != 0 :
+            windll.user32.KillTimer(self.hwnd,self._kid )
+            self._kid = 0
+            return True
+        return False
+
+
+
+class WkeSnapShot():
+    """网页视图截图
+
+        Win32定时器的接口对象,可以指定定时器的对应窗口/ID/周期/响应函数
+
+        Example:
+            
+            .. code:: c
+                webview = WebWindow()
+                webview.create(0,0,0,800,600)
+                snap = WkeSnapShot()
+                snap.bind(webview.getWindowHandle())
+                setattr(webview,"snap",snap)
+
+                snap.capture()
+                snap.save("screenshot.bmp")
+
+                Wke.runMessageLoop()       
+
+    """
+    def __init__(self):
+        '''
+        D3D 的窗口需要再前台才能,最小化不行
+        DirectX12的窗口不行
+        '''
+        self.hwnd = None  #默认当前窗口
+        self.WindowDC = None
+        self.DC = None
+        self.bmpDC = None
+        self.bmp = None
+  
+
+        self.bmpinfo = None
+
+        self.clientWidth = -1
+        self.clientHeight = -1
+        #客户区相对于窗口的偏移
+        self.clientTop = 0    
+        self.clientLeft = 0    
+
+        return
+
+    def __del__(self):
+        self.release()
+        return
+    @property
+    def size(self):
+        return self.clientWidth,self.clientHeight 
+
+    @property
+    def bytesPixel(self):
+        return self.bmBytesPixel
+
+    @property
+    def width(self):
+        return self.clientWidth
+
+    @property
+    def height(self):
+        return self.clientHeight 
+    
+    @property
+    def bits(self):
+        return self.bmp.GetBitmapBits(True)
+
+    @property
+    def bitsInfo(self):
+        return self.bmp.GetInfo()  
+      
+    def bind(self,hwnd):
+        """绑定指定的窗口
+
+        如果窗口Resize了,需要重新绑定
+
+        Args:
+            hwnd(int): 要截图的窗口句柄
+        Returns:
+            int: 返回原窗口句柄绑定成功。返回-1绑定失败
+        """  
+        ret = -1
+        self.WindowDC = win32gui.GetWindowDC(hwnd)
+        if self.WindowDC != 0:
+            ret = hwnd
+            self.hwnd = hwnd
+            self.DC = win32ui.CreateDCFromHandle(self.WindowDC)
+            # mfcDC创建可兼容的DC
+            self.bmpDC = self.DC.CreateCompatibleDC()
+
+            #窗口全局
+            winRect = Rect()
+            windll.user32.GetWindowRect(self.hwnd,byref(winRect))
+            #print("%d,%d,%d,%d"%(winRect.Left,winRect.Top,winRect.Right,winRect.Bottom))
+
+            #窗口客户区
+            clientRect = Rect()
+            #此时为客户区内坐标
+            windll.user32.GetClientRect(self.hwnd,byref(clientRect))
+            #print("%d,%d,%d,%d"%(clientRect.Left,clientRect.Top,clientRect.Right,clientRect.Bottom))
+
+            self.clientWidth=clientRect.Right - clientRect.Left 
+            self.clientHeight=clientRect.Bottom- clientRect.Top 
+
+            #转换到全局屏幕坐标
+            p = mPos()
+            p.x = 0
+            p.y = 0
+            windll.user32.ClientToScreen(self.hwnd,byref(p))
+            #print("%d,%d"%(p.x,p.y))
+
+            self.clientLeft = p.x - winRect.Left
+            self.clientTop = p.y  - winRect.Top  
+
+
+            # 创建bigmap准备保存图片
+            self.bmp = win32ui.CreateBitmap()
+            self.bmp.CreateCompatibleBitmap(self.DC, self.clientWidth, self.clientHeight)
+            self.bmpinfo = self.bmp.GetInfo()
+
+            self.clientWidth = self.bmpinfo['bmWidth']
+            self.clientHeight =  self.bmpinfo['bmHeight']
+            self.bmBytesPixel = self.bmpinfo['bmBitsPixel']//8
+
+        return    ret
+
+
+
+
+    def release(self):
+        """释放截图对象的资源
+        """    
+        if self.bmpDC:
+            self.bmpDC.DeleteDC()
+            self.bmpDC = None
+        if self.DC:    
+            self.DC.DeleteDC()
+            self.DC = None
+        if self.WindowDC:
+            win32gui.ReleaseDC(self.hwnd,self.WindowDC)
+            self.WindowDC = None
+
+        if self.bmp:
+            win32gui.DeleteObject(self.bmp.GetHandle())
+            self.bmp = None
+       
+        self.bmpinfo = None
+        self.clientWidth = -1
+        self.clientHeight = -1
+        self.clientTop = 0    
+        self.clientLeft = 0    
+
+        return
+
+    def capture(self):
+        """截图
+
+        Return:
+            bytes: 当前截图的二进制流
+        """
+        if self.hwnd == None:
+            return None
+
+        self.bmpDC.SelectObject(self.bmp)
+ 
+        '''
+        PW_CLIENTONLY=1
+        PW_RENDERFULLCONTENT=2
+        WM_PRINT     =                   0x0317
+        WM_PRINTCLIENT    =              0x0318
+
+        ret = windll.user32.PrintWindow(hwnd, self.DC.GetSafeHdc(),WM_PRINTCLIENT )
+        print(ret)
+        '''
+        self.bmpDC.BitBlt((0 ,0), (self.clientWidth, self.clientHeight), self.DC, ( self.clientLeft,self.clientTop ), win32con.SRCCOPY)
+
+        #bmpinfo = self.bmp.GetInfo()
+        #bmpBits = self.bmp.GetBitmapBits(True)
+
+        return 
+ 
+    def saveAsBmp(self,name):
+        """截图数据存入bmp文件
+
+        使用capture截图后的二进制数据存入name指定的文件,bmp格式
+
+        Args:
+            name(str): 使用capture截图后的二进制数据
+
+        """  
+        if self.hwnd == None:
+            return None
+        self.bmp.SaveBitmapFile(self.bmpDC,name)    
+        return
+
+
+    def saveAsPng(self,name):
+        """截图数据存入png文件
+
+        使用capture截图后的二进制数据存入name指定的文件,png格式
+
+        Args:
+            name(str): 使用capture截图后的二进制数据
+
+        """  
+        def bgra2rgb(raw,width, height):        
+            """BMP格式中的BGRA翻转成RGB""" 
+            rgb = bytearray(height * width * 3)
+            rgb[0::3] = raw[2::4]   #r
+            rgb[1::3] = raw[1::4]   #g
+            rgb[2::3] = raw[0::4]   #b
+            return bytes(rgb)
+        
+        def toPng(data, width, height, level=6, filename=None):
+            """RGB压缩到文件""" 
+            line = width * 3
+            png_filter = pack(">B", 0)
+            scanlines = b"".join(
+                [png_filter + data[y * line : y * line + line] for y in range(height)]
+            )
+
+            magic = pack(">8B", 137, 80, 78, 71, 13, 10, 26, 10)
+        
+            ihdr = [b"", b"IHDR", b"", b""]
+            ihdr[2] = pack(">2I5B", width, height, 8, 2, 0, 0, 0)
+            ihdr[3] = pack(">I", zlib.crc32(b"".join(ihdr[1:3])) & 0xFFFFFFFF)
+            ihdr[0] = pack(">I", len(ihdr[2]))
+
+        
+            idat = [b"", b"IDAT", zlib.compress(scanlines, level), b""]
+            idat[3] = pack(">I", zlib.crc32(b"".join(idat[1:3])) & 0xFFFFFFFF)
+            idat[0] = pack(">I", len(idat[2]))
+
+            
+            iend = [b"", b"IEND", b"", b""]
+            iend[3] = pack(">I", zlib.crc32(iend[1]) & 0xFFFFFFFF)
+            iend[0] = pack(">I", len(iend[2]))
+
+            if not filename:
+                #没指定文件名就返回二进制数据
+                return magic + b"".join(ihdr + idat + iend)
+            with open(filename, "wb") as f:
+                f.write(magic+ b"".join(ihdr + idat + iend))
+            return
+        
+        if self.hwnd == None:
+            return None
+        
+        bits = self.bmp.GetBitmapBits(True)
+        rgb = bgra2rgb(bits,self.clientWidth ,self.clientHeight )     
+        toPng(rgb,self.clientWidth ,self.clientHeight,7,name )   
+        return None
 
 
 class HwndMsgAdapter():
@@ -295,7 +644,7 @@ class HwndMsgAdapter():
             .. code:: python      
 
                 x,y,w,h = 0,0,640,480
-                hwnd = createWindow('Window',x,y,w,h)
+                hwnd = wkeCreateWindow('Window',x,y,w,h)
                 webview.build(hwnd,x,y,w,h)   
                 
                 a = HwndMsgAdapter()
@@ -345,11 +694,11 @@ class HwndMsgAdapter():
         if webview is not None:
             self.webview = webview
 
-        self.oldGWL_USERDATA = getWindowLongHook(hwnd)
-        setWindowLongHook(hwnd,self.webview)
+        self.oldGWL_USERDATA = wkeGetWindowLongHook(hwnd)
+        wkeSetWindowLongHook(hwnd,self.webview)
 
         self.attached = True
-        self.oldHwndProc = replaceHWndProc(hwnd,self._onWndProcCallback)
+        self.oldHwndProc = wkeReplaceHWndProc(hwnd,self._onWndProcCallback)
 
         
         return
@@ -360,8 +709,8 @@ class HwndMsgAdapter():
         """
         if self.attached == True:
             cb = CFUNCTYPE(_LRESULT, _LRESULT,_LRESULT,_LRESULT)
-            self.oldHwndProc = replaceHWndProc(self.hwnd,cast(self.oldHwndProc,cb))
-            setWindowLongHook(self.hwnd,self.oldGWL_USERDATA)
+            self.oldHwndProc = wkeReplaceHWndProc(self.hwnd,cast(self.oldHwndProc,cb))
+            wkeSetWindowLongHook(self.hwnd,self.oldGWL_USERDATA)
             self.attached = False
         return     
         

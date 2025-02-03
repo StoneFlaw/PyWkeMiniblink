@@ -136,7 +136,7 @@ def testCreateWindwow():
 
     hwnd = webview.getWindowHandle()
     
-    setIcon(hwnd,icon_path)
+    wkeSetIcon(hwnd,icon_path)
 
     def OnCloseEvent(context,*args,**kwargs):
         win32gui.PostQuitMessage(0)
@@ -153,7 +153,7 @@ def testBindWindwow():
 
     hwnd,x,y,w,h = get_hwnd(0,0,640,480,webview)
     
-    setIcon(hwnd,icon_path)
+    wkeSetIcon(hwnd,icon_path)
     webview.build(hwnd,x,y,w,h)   
 
     #'https://www.w3school.com.cn/jsref/index.asp'
@@ -177,7 +177,7 @@ def testJsExtend():
 
     hwnd = webview.getWindowHandle()
     
-    setIcon(hwnd,icon_path)
+    wkeSetIcon(hwnd,icon_path)
 
     Wke.extend(jsWindowExtend,'jsWindowExtend', param=webview)
     Wke.extend(jsCallpy,'jsCallpy', param=webview)
@@ -198,7 +198,7 @@ def testOnEvent():
     webview.create(0,0,0,800,600)
     hwnd = webview.getWindowHandle()
     
-    setIcon(hwnd,icon_path)
+    wkeSetIcon(hwnd,icon_path)
 
     def OnEvent(context,*args,**kwargs):
         param = context["param"]
@@ -219,7 +219,7 @@ def main():
     Wke.init()
     Wke.setCookieAndStagePath(cookie=f'{father_folder }/build/cookie.dat',localStage=f'{father_folder }/build/LocalStage')
     print("Miniblink Version :",Wke.version,"\n Version:",Wke.Version())
-    Wke.setCookieAndStagePath(cookie=f'{father_folder }/build/cookie.dat',localStage=f'{father_folder }/build/LocalStage')
+ 
     msg = '''==================
     1. testCreateWindow
     2. testBindWindow

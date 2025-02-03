@@ -47,7 +47,7 @@ class Test( unittest . TestCase ):
 
 if __name__=='__main__':
     Wke.init()
-
+    Wke.setCookieAndStagePath(cookie=f'{father_folder }/build/cookie.dat',localStage=f'{father_folder }/build/LocalStage')
     suit = unittest.TestSuite()
     suit.addTests( [Test("test_webviewUserKey")])
     runner = unittest.TextTestRunner()

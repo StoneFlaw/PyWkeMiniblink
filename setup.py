@@ -14,7 +14,7 @@ with open('README.md', encoding='utf-8') as f:
 
 setup(
     name="WkeMiniblink",  # 项目名
-    version="0.1.4",  # 版本号
+    version="0.1.5",  # 版本号
 
     #自动搜索包含__init__.py的文件夹
     packages=find_packages(exclude=["dist.*", "dist", "tests.*", "tests","__pycache__/*"]),

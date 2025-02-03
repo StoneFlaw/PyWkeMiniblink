@@ -6,7 +6,8 @@ name: Python Build
 
 on:
   push:
-    branches: [ "main" ]
+    tags:
+      - 'v*' # 当推送以 v 开头的标签时触发
   
   pull_request:
     branches: [ "main" ]
@@ -27,8 +28,14 @@ jobs:
       run: |
         set PYTHONIOENCODING=utf-8
         python -m pip install --upgrade pip 
+        pip install setuptools wheel 
         pip install -r requirements.txt
 
-    - name: Test
-      run: |
-        python unitTest\testWebViewOnEvent.py 
+    #一个版本号只能发布一次到PYPI
+    - name: Build package
+      run:  |
+        pip install twine
+        #pypi对文件大小写敏感,要文件名包含工程名
+        #python setup.py  sdist 
+        python setup.py  bdist_wheel
+        twine upload --repository pypi --username __token__ --password ${{ secrets.PYPI_TOKEN }}  dist/*.whl

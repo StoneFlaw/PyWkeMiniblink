@@ -34,27 +34,29 @@ cookiePath = f'{father_folder }/build/cookie.dat'
 localStagePath=f'{father_folder }/build/LocalStage'
 
 
+count = 0
 class Test( unittest . TestCase ):
     """
 
     """
-  
-    def test_webview( self ):
+    
+    def test_Timer( self ):
+        #无指定窗口
+        global count
+        def timeCallback(*args,**kwargs):
+            global count
+            count = count+1
+            if count>=9:
+                owner = kwargs["owner"]
+                owner.stop()
+                win32gui.PostQuitMessage(0)
+            return
 
-        webview = WebWindow()
-        entries = Wke.event.eventEntries
-        for event in entries:
-            has = hasattr(webview,event)
-            self.assertEqual(hasattr(webview,event),True)
-            try:
-                func = entries[event]
-                doc  = func.__doc__
-                lines = str(doc).splitlines()
-                print(f"def {event}(self,func,param,*args,**kwargs):")
-                print("    \"\"\"",lines[0],"\"\"\"")
-                print(f"    return Wke.event.{event}(self,func,param,*args,**kwargs)")         
-            except:
-                pass      
+        t = WkeTimer()    
+        t.init(timeCallback,None,0,3000)
+        t.start()
+        Wke.runMessageLoop()
+        self.assertEqual(count,9)
         return
 
 
@@ -63,7 +65,7 @@ if __name__=='__main__':
     Wke.init()
     Wke.setCookieAndStagePath(cookie=f'{father_folder }/build/cookie.dat',localStage=f'{father_folder }/build/LocalStage')
     suit = unittest.TestSuite()
-    suit.addTests( [Test("test_webview")])
+    suit.addTests( [Test("test_Timer")])
     runner = unittest.TextTestRunner()
     runner.run(suit)
 

@@ -182,7 +182,7 @@ Example:
 
 ```python
 	x,y,w,h = 0,0,640,480
-    hwnd = createWindow('Window',x,y,w,h)
+    hwnd = wkeCreateWindow('Window',x,y,w,h)
     webview.build(hwnd,x,y,w,h)   
 
     a = HwndMsgAdapter()

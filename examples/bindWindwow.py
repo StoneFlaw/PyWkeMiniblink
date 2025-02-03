@@ -36,9 +36,9 @@ def main():
     webview = WebWindow()
     x,y,w,h = 0,0,640,480
 
-    hwnd = createWindow('自创建Win窗口',x,y,w,h)
+    hwnd = wkeCreateWindow('自创建Win窗口',x,y,w,h)
     
-    setIcon(hwnd,icon_path)
+    wkeSetIcon(hwnd,icon_path)
     webview.build(hwnd,x,y,w,h)   
     
     a = HwndMsgAdapter()
