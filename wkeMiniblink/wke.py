@@ -53,7 +53,6 @@ class Wke():
 
     _jsBinderContext = {}
 
-
     _localStagePath = None
     _cookiePath =  None
     @staticmethod
