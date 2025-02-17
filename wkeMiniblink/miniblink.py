@@ -16,19 +16,7 @@ from ctypes import (
 from . import _LRESULT
 from .wkeStruct import (wkeProxy,wkePostBodyElements,wkeRect)
 
-
-
-
-def MiniblinkInit(_path):
-    
-    #architecture=platform.architecture()[0]
-    #if architecture=='64bit' and (not path.endswith('x64.dll')):
-    #    print('请使用与node.dll位数对应的Python版本')
-    #    return 0
-    #elif architecture=='32bit' and path.endswith('x64.dll'):
-    #    print('请使用与node.dll位数对应的Python版本')
-    #    return 0
-     
+def MiniblinkInit(_path):     
     mb = cdll.LoadLibrary(_path)
     mb.wkeInit()
 

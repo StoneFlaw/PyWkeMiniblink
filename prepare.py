@@ -73,7 +73,7 @@ def clean():
 if __name__=='__main__':
     argv = sys.argv
     argc = len(sys.argv)
-    opt = 'prepare'
+    opt = 'doc'
 
     if argc >= 2:
         opt = argv[1]

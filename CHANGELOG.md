@@ -2,6 +2,14 @@
 
 # V0.1
 
+## 2025/02/16 v0.1.6
+增加setup.cfg 配置
+setup
+增加wkeMiniblink/__pyinstaller/* 用于安装时注册pyinstaller的hook文件
+调整wkeMiniblink/__init__.py 识别Pyinstaller打包为exe运行和基于解释器运行时加载默认DLL的路径
+
+
+
 ## 2025/02/03 v0.1.5
 
 调整WkeWin32.py部分函数名

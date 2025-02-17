@@ -22,7 +22,27 @@ pip3 install WkeMiniblink
 
 ## 发布
 
-pyinstaller
+### pyinstaller
+
+(Pyinstaller>=6.0.0 )
+
+- 在Pyinstaller打包 one dir（-D 目录模式）时，除可执行文件外，其余文件都将被转移到 _internal 文件夹
+
+    以此为Package的根目录
+
+- 在Pyinstaller打包 one file （-F 文件模式）时，除可执行文件外，其余文件都将被转移到一个临时文件夹
+
+    以此为Package的根目录
+
+- 在Python解释器模式下,以Lib\site-packages
+
+    以此为Package的根目录
+
+
+
+wkeMiniblink 搜索 解释器目录/Package的根目录
+
+
 
 ## 示例
 
