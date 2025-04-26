@@ -11,7 +11,8 @@ from ctypes import (
     c_void_p,
     POINTER,
     py_object,
-    cdll
+    cdll,
+    CFUNCTYPE
 )
 from . import _LRESULT
 from .wkeStruct import (wkeProxy,wkePostBodyElements,wkeRect)
@@ -41,6 +42,7 @@ def MiniblinkInit(_path):
     mb.wkeMoveToCenter.argtypes=[_LRESULT]
     mb.wkeGoForward.argtypes=[_LRESULT]
     mb.wkeGoBack.argtypes=[_LRESULT]
+    mb.wkeLoadURL.argtypes=[_LRESULT]
     mb.wkeLoadURLW.argtypes=[_LRESULT]
     mb.wkeLoadHTMLW.argtypes=[_LRESULT]
     mb.wkeLoadFile.argtypes=[_LRESULT]
@@ -94,7 +96,8 @@ def MiniblinkInit(_path):
     mb.wkeOnLoadingFinish.argtypes=[_LRESULT]
     mb.wkeOnLoadUrlFail.argtypes=[_LRESULT]
     mb.wkeNetGetFavicon.argtypes=[_LRESULT]
-    mb.wkeOnWindowClosing.argtypes=[_LRESULT]
+
+    mb.wkeOnWindowClosing.argtypes=[_LRESULT,CFUNCTYPE(c_bool,_LRESULT,_LRESULT),_LRESULT]
     mb.wkeOnWindowDestroy.argtypes=[_LRESULT]
 
     mb.wkeIsDocumentReady.argtypes=[_LRESULT]

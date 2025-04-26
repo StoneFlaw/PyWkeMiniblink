@@ -1,6 +1,6 @@
 # -*- coding:utf-8 -*-
 import sys,os
-from ctypes import c_int
+from ctypes import c_int,c_longlong
 from platform import architecture
 from pkgutil import extend_path
 
