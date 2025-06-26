@@ -2,12 +2,14 @@
 import platform
 from ctypes import (
     c_int,
+    c_uint,
     c_long,
     c_longlong,
     c_float,
     c_char_p,
     c_wchar_p,
     c_bool,
+    c_size_t,
     c_void_p,
     POINTER,
     py_object,
@@ -15,94 +17,246 @@ from ctypes import (
     CFUNCTYPE
 )
 from . import _LRESULT
-from .wkeStruct import (wkeProxy,wkePostBodyElements,wkeRect)
+from .wkeStruct import *
 
-def MiniblinkInit(_path):     
+def MiniblinkInit(_path):   
+    '''
+    wkeLoadingResult -> enum ->c_uint
+    wkeConsoleLevel -> enum -> c_uint
+    wkeNavigationType -> enum -> c_uint
+    wkeWindowType -> enum -> c_uint
+    wkeString ->CString -> c_char_p
+    wkeWebFrameHandle ->c_void_p
+    wkeNetJob -> c_void_p
+    utf8* -> typedef char utf8 ->c_char_p
+
+    '''  
     mb = cdll.LoadLibrary(_path)
     mb.wkeInit()
 
     mb.wkeVersion.restype=_LRESULT
+
     mb.wkeVersionString.restype=c_char_p
-    mb.wkeGC.argtypes=[_LRESULT,c_long]
+
+    mb.wkeGC.argtypes=[_LRESULT,_LRESULT]
+
+    mb.wkeGetTitle.argtypes=[_LRESULT]
     mb.wkeGetTitle.restype=c_char_p
 
+    mb.wkeCreateWebWindow.argtypes=[_LRESULT,c_uint,_LRESULT,c_uint,c_uint]
+
     mb.wkeCreateWebWindow.restype=_LRESULT
-    mb.wkeCreateWebView.restype=_LRESULT        
-    mb.wkeSetWindowTitleW.argtypes=[_LRESULT]
-    mb.wkeSetTransparent.argtypes=[_LRESULT]
-    mb.wkeSetHandleOffset.argtypes=[_LRESULT]
-    mb.wkeSetHandle.argtypes=[_LRESULT]
+
+    mb.wkeCreateWebView.argtypes=[]
+
+    mb.wkeCreateWebView.restype=_LRESULT   
+
+    mb.wkeSetWindowTitleW.argtypes=[_LRESULT,c_wchar_p]
+
+    mb.wkeSetTransparent.argtypes=[_LRESULT,c_bool]
+
+    mb.wkeSetHandleOffset.argtypes=[_LRESULT,c_int,c_int]
+
+    mb.wkeSetHandle.argtypes=[_LRESULT,_LRESULT]
+
     mb.wkeKillFocus.argtypes=[_LRESULT]
+
     mb.wkeRepaintIfNeeded.argtypes=[_LRESULT]
+
     mb.wkeWake.argtypes=[_LRESULT]
+
     mb.wkeGetCaretRect.argtypes=[_LRESULT]
+
     mb.wkeGetCaretRect.restype=wkeRect
-    mb.wkeResize.argtypes=[_LRESULT]
-    mb.wkeShowWindow.argtypes=[_LRESULT]
+
+    mb.wkeResize.argtypes=[_LRESULT,c_int,c_int]
+
+    mb.wkeShowWindow.argtypes=[_LRESULT,c_bool]
+
     mb.wkeMoveToCenter.argtypes=[_LRESULT]
+
     mb.wkeGoForward.argtypes=[_LRESULT]
+    mb.wkeGoForward.restype=c_bool
+
     mb.wkeGoBack.argtypes=[_LRESULT]
-    mb.wkeLoadURL.argtypes=[_LRESULT]
-    mb.wkeLoadURLW.argtypes=[_LRESULT]
-    mb.wkeLoadHTMLW.argtypes=[_LRESULT]
-    mb.wkeLoadFile.argtypes=[_LRESULT]
+    mb.wkeGoBack.restype=c_bool
+
+    mb.wkeLoadURL.argtypes=[_LRESULT,c_char_p]
+
+    mb.wkeLoadURLW.argtypes=[_LRESULT,c_wchar_p]
+
+    mb.wkeLoadHTMLW.argtypes=[_LRESULT,c_wchar_p]
+
+    mb.wkeLoadFile.argtypes=[_LRESULT,c_char_p]
+
+    mb.wkeLoadFileW.argtypes=[_LRESULT,c_wchar_p]
+
     mb.wkeReload.argtypes=[_LRESULT]
+
     mb.wkeStopLoading.argtypes=[_LRESULT]
+
     mb.wkeWidth.argtypes=[_LRESULT]
-    mb.wkeWidth.restype=_LRESULT
+
     mb.wkeHeight.argtypes=[_LRESULT]
-    mb.wkeHeight.restype=_LRESULT
+
     mb.wkeContentsWidth.argtypes=[_LRESULT]
-    mb.wkeContentsWidth.restype=_LRESULT
+
     mb.wkeContentsHeight.argtypes=[_LRESULT]
-    mb.wkeContentsHeight.restype=_LRESULT
+
     mb.wkeGetWindowHandle.argtypes=[_LRESULT]
     mb.wkeGetWindowHandle.restype=_LRESULT
+
     mb.wkeGetURL.argtypes=[_LRESULT]
     mb.wkeGetURL.restype=c_char_p
-    mb.wkeGetFrameUrl.argtypes=[_LRESULT]
+
+    mb.wkeGetFrameUrl.argtypes=[_LRESULT,_LRESULT]
     mb.wkeGetFrameUrl.restype=c_char_p
+
     mb.wkeGetSource.argtypes=[_LRESULT]
     mb.wkeGetSource.restype=c_char_p
+    
     mb.wkeUtilSerializeToMHTML.argtypes=[_LRESULT]
     mb.wkeUtilSerializeToMHTML.restype=c_char_p
+
+    #注意：此函数一般给3d游戏使用。另外频繁使用此接口并拷贝像素有性能问题。最好用wkeGetViewDC再去拷贝dc
     mb.wkeGetViewDC.argtypes=[_LRESULT]
-    mb.wkeGetViewDC.restype=_LRESULT
-    mb.wkeFireMouseEvent.argtypes=[_LRESULT]
-    mb.wkeFireKeyDownEvent.argtypes=[_LRESULT]
-    mb.wkeFireKeyUpEvent.argtypes=[_LRESULT]
-    mb.wkeFireKeyPressEvent.argtypes=[_LRESULT]
-    mb.wkeFireWindowsMessage.argtypes=[_LRESULT]
-    mb.wkeFireMouseWheelEvent.argtypes=[_LRESULT,c_int,c_int,_LRESULT,c_int]
-    mb.wkeFireContextMenuEvent.argtypes=[_LRESULT]
+    mb.wkeGetViewDC.restype=restype=_LRESULT
 
-    mb.wkeOnCreateView.argtypes=[_LRESULT]
-    mb.wkeOnPaintUpdated.argtypes=[_LRESULT]
-    mb.wkeOnPaintBitUpdated.argtypes=[_LRESULT]
-    mb.wkeOnNavigation.argtypes=[_LRESULT]
-    mb.wkeOnTitleChanged.argtypes=[_LRESULT]
-    mb.wkeOnURLChanged2.argtypes=[_LRESULT]
-    mb.wkeOnMouseOverUrlChanged.argtypes=[_LRESULT]
-    mb.wkeOnAlertBox.argtypes=[_LRESULT]
-    mb.wkeOnConfirmBox.argtypes=[_LRESULT]
-    mb.wkeOnPromptBox.argtypes=[_LRESULT]
-    mb.wkeOnConsole.argtypes=[_LRESULT]
-    mb.wkeOnDownload.argtypes=[_LRESULT]
-    mb.wkeOnDocumentReady2.argtypes=[_LRESULT]
-    mb.wkeNetOnResponse.argtypes=[_LRESULT]
-    mb.wkeOnLoadUrlBegin.argtypes=[_LRESULT]
-    mb.wkeOnLoadUrlEnd.argtypes=[_LRESULT]
-    mb.wkeOnLoadUrlEnd.argtypes=[_LRESULT]
-    mb.wkeOnLoadingFinish.argtypes=[_LRESULT]
-    mb.wkeOnLoadUrlFail.argtypes=[_LRESULT]
-    mb.wkeNetGetFavicon.argtypes=[_LRESULT]
+    mb.wkeFireMouseEvent.argtypes=[_LRESULT,c_uint,c_int,c_int,c_uint]
+    mb.wkeFireMouseEvent.restype=c_bool
 
-    mb.wkeOnWindowClosing.argtypes=[_LRESULT,CFUNCTYPE(c_bool,_LRESULT,_LRESULT),_LRESULT]
-    mb.wkeOnWindowDestroy.argtypes=[_LRESULT]
+    mb.wkeFireKeyDownEvent.argtypes=[_LRESULT,c_uint,c_uint,c_bool]
+    mb.wkeFireKeyDownEvent.restype=c_bool
+
+    mb.wkeFireKeyUpEvent.argtypes=[_LRESULT,c_uint,c_uint,c_bool]
+    mb.wkeFireKeyUpEvent.restype=c_bool
+
+    mb.wkeFireKeyPressEvent.argtypes=[_LRESULT,c_uint,c_uint,c_bool]
+    mb.wkeFireKeyPressEvent.restype=c_bool
+
+    mb.wkeFireWindowsMessage.argtypes=[_LRESULT,_LRESULT,c_uint,_LRESULT,_LRESULT]
+    mb.wkeFireWindowsMessage.restype=c_bool
+
+    mb.wkeFireMouseWheelEvent.argtypes=[_LRESULT,c_int,c_int,c_int,c_uint]
+    mb.wkeFireMouseWheelEvent.restype=c_bool
+
+    mb.wkeFireContextMenuEvent.argtypes=[_LRESULT,c_int,c_int,c_int,c_uint]
+    mb.wkeFireContextMenuEvent.restype=c_bool
+
+    # wkeWebView wkeCreateViewCallback(wkeWebView webView, void* param, wkeNavigationType navigationType, const wkeString url, const wkeWindowFeatures* windowFeatures);
+    mb.wkeOnCreateView.argtypes=[_LRESULT,CFUNCTYPE(_LRESULT,_LRESULT,c_void_p,c_uint,c_char_p,POINTER(wkeWindowFeatures)),c_void_p]
+
+    #void wkePaintUpdatedCallback(wkeWebView webView, void* param, const HDC hdc, int x, int y, int cx, int cy);
+    mb.wkeOnPaintUpdated.argtypes=[None,CFUNCTYPE(None,_LRESULT,c_void_p,_LRESULT,c_int,c_int,c_int,c_int),c_void_p]
+
+    #void wkePaintBitUpdatedCallback(wkeWebView webView, void* param, const void* buffer, const wkeRect* r, int width, int height);
+    mb.wkeOnPaintBitUpdated.argtypes=[_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,c_void_p,POINTER(wkeRect),c_int,c_int),c_void_p]
+    
+    #bool wkeNavigationCallback(wkeWebView webView, void* param, wkeNavigationType navigationType, wkeString url);
+    mb.wkeOnNavigation.argtypes=[_LRESULT,CFUNCTYPE(c_bool,_LRESULT,c_void_p,c_int,c_char_p),c_void_p]
+
+    #typedef void(WKE_CALL_TYPE*wkeTitleChangedCallback)(wkeWebView webView, void* param, const wkeString title);
+    mb.wkeOnTitleChanged.argtypes=[_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p),c_void_p]    
+
+    #typedef void(WKE_CALL_TYPE*wkeURLChangedCallback2)(wkeWebView webView, void* param, wkeWebFrameHandle frameId, const wkeString url);
+    mb.wkeOnURLChanged2.argtypes=[_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,c_void_p,c_char_p),c_void_p]  
+
+    mb.wkeOnMouseOverUrlChanged.argtypes=[_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,c_void_p,c_char_p),c_void_p]  
+
+    #typedef void(WKE_CALL_TYPE*wkeAlertBoxCallback)(wkeWebView webView, void* param, const wkeString msg);
+    mb.wkeOnAlertBox.argtypes=[_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p),c_void_p] 
+    
+    #typedef bool(WKE_CALL_TYPE*wkeConfirmBoxCallback)(wkeWebView webView, void* param, const wkeString msg);
+    mb.wkeOnConfirmBox.argtypes=[_LRESULT,CFUNCTYPE(c_bool,_LRESULT,c_void_p,c_char_p),c_void_p] 
+
+    #typedef bool(WKE_CALL_TYPE*wkePromptBoxCallback)(wkeWebView webView, void* param, const wkeString msg, const wkeString defaultResult, wkeString result);
+    mb.wkeOnPromptBox.argtypes=[_LRESULT,CFUNCTYPE(c_bool,_LRESULT,c_void_p,c_char_p,c_char_p,c_char_p),c_void_p]
+
+    #typedef void(WKE_CALL_TYPE*wkeConsoleCallback)(wkeWebView webView, void* param, wkeConsoleLevel level, const wkeString message, const wkeString sourceName, unsigned sourceLine, const wkeString stackTrace);
+    mb.wkeOnConsole.argtypes=[_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,c_uint,c_char_p,c_char_p,c_int,c_char_p),c_void_p]
+
+    #typedef bool(WKE_CALL_TYPE*wkeDownloadCallback)(wkeWebView webView, void* param, const char* url);
+    mb.wkeOnDownload.argtypes=[_LRESULT,CFUNCTYPE(c_bool,_LRESULT,c_void_p,c_char_p),c_void_p]
+
+    #typedef wkeDownloadOpt(WKE_CALL_TYPE*wkeDownload2Callback)(wkeWebView webView, void* param,size_t expectedContentLength,const char* url, const char* mime, const char* disposition, wkeNetJob job, wkeNetJobDataBind* dataBind);
+    mb.wkeOnDownload2.argtypes=[_LRESULT,CFUNCTYPE(wkeNetJobDataBind,_LRESULT,c_void_p,c_size_t,c_char_p,c_char_p,c_char_p,c_void_p,POINTER(wkeNetJobDataBind)),c_void_p]
+
+    #typedef void(WKE_CALL_TYPE*wkeDocumentReady2Callback)(wkeWebView webView, void* param, wkeWebFrameHandle frameId);
+    mb.wkeOnDocumentReady2.argtypes=[_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,c_void_p),c_void_p]
+
+    #typedef bool(WKE_CALL_TYPE*wkeNetResponseCallback)(wkeWebView webView, void* param, const utf8* url, wkeNetJob job);
+    mb.wkeNetOnResponse.argtypes=[_LRESULT,CFUNCTYPE(c_bool,_LRESULT,c_void_p,c_char_p,c_void_p),c_void_p]
+
+    #typedef bool(WKE_CALL_TYPE*wkeLoadUrlBeginCallback)(wkeWebView webView, void* param, const utf8* url, wkeNetJob job);
+    mb.wkeOnLoadUrlBegin.argtypes=[_LRESULT,CFUNCTYPE(c_bool,_LRESULT,c_void_p,c_char_p,c_void_p),c_void_p]
+
+    #typedef void(WKE_CALL_TYPE*wkeLoadUrlEndCallback)(wkeWebView webView, void* param, const utf8* url, wkeNetJob job, void* buf, int len);
+    mb.wkeOnLoadUrlEnd.argtypes=[_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p,c_void_p,c_void_p,c_int),c_void_p]
+
+    #typedef void(WKE_CALL_TYPE*wkeLoadingFinishCallback)(wkeWebView webView, void* param, const wkeString url, wkeLoadingResult result, const wkeString failedReason);
+    mb.wkeOnLoadingFinish.argtypes=[_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p,c_int,c_char_p),c_void_p]
+
+    #typedef void(WKE_CALL_TYPE*wkeLoadUrlFailCallback)(wkeWebView webView, void* param, const utf8* url, wkeNetJob job);
+    mb.wkeOnLoadUrlFail.argtypes=[_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p,c_void_p),c_void_p]
+
+    #typedef void(WKE_CALL_TYPE*wkeOnNetGetFaviconCallback)(wkeWebView webView, void* param, const utf8* url, wkeMemBuf* buf);
+    mb.wkeNetGetFavicon.argtypes=[_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p,POINTER(wkeMemBuf)),c_void_p]
+
+    #typedef bool(WKE_CALL_TYPE*wkeWindowClosingCallback)(wkeWebView webWindow, void* param);
+    mb.wkeOnWindowClosing.argtypes=[_LRESULT,CFUNCTYPE(c_bool,_LRESULT,c_void_p),c_void_p]
+
+    #typedef void(WKE_CALL_TYPE*wkeWindowDestroyCallback)(wkeWebView webWindow, void* param);
+    mb.wkeOnWindowDestroy.argtypes=[_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p),c_void_p]
+
+    #typedef void(WKE_CALL_TYPE*wkeOnScreenshot)(wkeWebView webView, void* param, const char* data, size_t size);
+    mb.wkeScreenshot.argtypes=[_LRESULT,POINTER(wkeScreenshotSettings),CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p,c_size_t),c_void_p]
+
+    #typedef void(WKE_CALL_TYPE*wkeLoadUrlHeadersReceivedCallback)(wkeWebView webView, void* param, const utf8* url, wkeNetJob job);
+    mb.wkeOnLoadUrlHeadersReceived = [_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p,c_void_p),c_void_p]
+
+    #typedef void(WKE_CALL_TYPE*wkeLoadUrlFinishCallback)(wkeWebView webView, void* param, const utf8* url, wkeNetJob job, int len);
+    mb.wkeLoadUrlFinishCallback=[_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p,c_void_p,c_int),c_void_p]
+
+    #typedef void(WKE_CALL_TYPE*wkeOnShowDevtoolsCallback)(wkeWebView webView, void* param);
+    mb.wkeShowDevtools = [_LRESULT,c_char_p,CFUNCTYPE(None,_LRESULT,c_void_p),c_void_p]
+
+    #typedef void(WKE_CALL_TYPE*wkeCaretChangedCallback)(wkeWebView webView, void* param, const wkeRect* r);
+    mb.wkeOnCaretChanged = [_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,POINTER(wkeRect)),c_void_p]
+
+    #typedef void(WKE_CALL_TYPE*wkeDraggableRegionsChangedCallback)(wkeWebView webView, void* param, const wkeDraggableRegion* rects, int rectCount);
+    mb.wkeOnDraggableRegionsChanged = [_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,POINTER(wkeDraggableRegion),c_int),c_void_p]
+
+    #typedef void(WKE_CALL_TYPE*wkeWillMediaLoadCallback)(wkeWebView webView, void* param, const char* url, wkeMediaLoadInfo* info);
+    mb.wkeOnWillMediaLoad =  [_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p,POINTER(wkeMediaLoadInfo)),c_void_p]
+
+    #typedef void(WKE_CALL_TYPE*wkeDidCreateScriptContextCallback)(wkeWebView webView, void* param, wkeWebFrameHandle frameId, void* context, int extensionGroup, int worldId);
+    mb.wkeOnDidCreateScriptContext =  [_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,c_void_p,c_void_p,c_int,c_int),c_void_p] 
+
+    #typedef void(WKE_CALL_TYPE*wkeWillReleaseScriptContextCallback)(wkeWebView webView, void* param, wkeWebFrameHandle frameId, void* context, int worldId);
+    mb.wkeOnWillReleaseScriptContext = [_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,c_void_p,c_void_p,c_int),c_void_p] 
+
+    #typedef void(WKE_CALL_TYPE*wkeStartDraggingCallback)(wkeWebView webView,void* param, wkeWebFrameHandle frame,const wkeWebDragData* data,wkeWebDragOperationsMask mask, const void* image, const wkePoint* dragImageOffset);
+    mb.wkeOnStartDragging = [_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,c_void_p,POINTER(wkeWebDragData),c_uint,c_void_p,POINTER(wkePoint)),c_void_p] 
+
+    #typedef void(WKE_CALL_TYPE*wkeOnPrintCallback)(wkeWebView webView, void* param, wkeWebFrameHandle frameId, void* printParams);
+    mb.wkeOnPrint = [_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,c_void_p,c_void_p),c_void_p] 
+
+    #typedef int(WKE_CALL_TYPE*wkeUiThreadPostTaskCallback)(HWND hWnd, wkeUiThreadRunCallback callback, void* param);
+    #typedef void(WKE_CALL_TYPE*wkeUiThreadRunCallback)(HWND hWnd, void* param);
+    mb.wkeUtilSetUiCallback =  [_LRESULT,CFUNCTYPE(c_int,_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p),c_void_p)] 
+
+    #typedef void(WKE_CALL_TYPE*wkeOnOtherLoadCallback)(wkeWebView webView, void* param, wkeOtherLoadType type, wkeTempCallbackInfo* info);
+    mb.wkeOnOtherLoad = [_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,c_int,POINTER(wkeTempCallbackInfo)),c_void_p] 
+
+    #typedef bool(WKE_CALL_TYPE* wkeOnContextMenuItemClickCallback)(wkeWebView webView, void* param, wkeOnContextMenuItemClickType type, wkeOnContextMenuItemClickStep step, wkeWebFrameHandle frameId,void* info);
+    mb.wkeOnContextMenuItemClick = [_LRESULT,CFUNCTYPE(c_bool,_LRESULT,c_void_p,c_int,c_int,c_void_p,c_void_p),c_void_p] 
 
     mb.wkeIsDocumentReady.argtypes=[_LRESULT]
+
     mb.wkeNetHookRequest.argtypes=[_LRESULT]
+
     mb.wkeNetGetRequestMethod.argtypes=[_LRESULT]
+
     mb.wkeNetGetRequestMethod.restype=_LRESULT
     mb.jsArgCount.argtypes=[_LRESULT]
     mb.jsArgCount.restype=_LRESULT

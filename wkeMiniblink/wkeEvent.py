@@ -176,8 +176,7 @@ class WkeEvent():
             func(function):         通知回调函数,事件发生时调用
             param(any, optional):   回调上下文参数,默认为None
 
-        TODO:
-            windowFeatures 未翻译c到py
+
 
         """   
 
@@ -420,7 +419,7 @@ class WkeEvent():
         .. code:: c
 
             //python 事件响应函数(conext:dict,args=[msg:str],kwargs=None) 
-            typedef void(*wkeConfirmBoxCallback)(wkeWebView webView, void* param, const wkeString msg);
+            typedef bool(*wkeConfirmBoxCallback)(wkeWebView webView, void* param, const wkeString msg);
 
         Args:
             pwebview(WebView):      webview对象(py) 
@@ -442,7 +441,7 @@ class WkeEvent():
         .. code:: c
 
             //python 事件响应函数(conext:dict,args=[msg:str,defaultResult:str,result:c_char_p],kwargs=None) 
-            typedef void(*wkePromptBoxCallback)(wkeWebView webView, void* param, const wkeString msg,wkeString defaultResult,wkeString result);
+            typedef bool(*wkePromptBoxCallback)(wkeWebView webView, void* param, const wkeString msg,wkeString defaultResult,wkeString result);
 
         Args:
             pwebview(WebView):      webview对象(py) 

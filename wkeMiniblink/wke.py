@@ -79,10 +79,6 @@ class Wke():
         for name,func in getmembers(Wke.dll):
             if name.startswith(("wke")):
                 setattr(Wke,name,func)
-
-
-        
-
         return
     
     @staticmethod

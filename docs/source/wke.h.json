@@ -1,0 +1,120 @@
+{
+	"void": "None",
+	"const utf8*": "c_char_p",
+	"BOOL": "c_bool",
+	"unsigned int": "c_uint",
+	"int": "c_int",
+	"wkeWebView": "_LRESULT",
+	"long": "c_long",
+	"WKE_FILE_OPEN": "CFUNCTYPE(c_void_p,c_char_p)",				/*typedef void* (WKE_CALL_TYPE *FILE_OPEN_) (const char* path);*/
+	"WKE_FILE_CLOSE": "CFUNCTYPE(None,c_void_p)",					/*typedef void(WKE_CALL_TYPE *FILE_CLOSE_) (void* handle);*/
+	"WKE_FILE_SIZE": "CFUNCTYPE(c_size_t,c_void_p)",				/*typedef size_t(WKE_CALL_TYPE *FILE_SIZE) (void* handle);*/
+	"WKE_FILE_READ": "CFUNCTYPE(c_size_t,c_void_p,c_void_p,c_size_t)",	/*typedef int(WKE_CALL_TYPE *FILE_READ) (void* handle, void* buffer, size_t size);*/
+	"WKE_FILE_SEEK": "CFUNCTYPE(c_size_t,c_void_p,c_int,c_int)",		/*typedef int(WKE_CALL_TYPE *FILE_SEEK) (void* handle, int offset, int origin);*/
+	"const char*": "c_char_p",
+	"const wchar_t*": "c_wchar_p",
+	"float": "c_float",
+	"bool": "c_bool",
+	"wkeRect": "wkeRect",
+	"const wkeClientHandler*": "POINTER(wkeClientHandle)",
+	"const wkeString": "c_char_p",									/*wkeString ->CString -> c_char_p*/
+	"jsExecState": "c_void_p",										/*typedef void* jsExecState;*/
+	"jsValue": "c_longlong",										/*typedef __int64 jsValue;*/
+	"const wkeSettings*": "POINTER(wkeSettings)",
+	"const wkeViewSettings*": "POINTER(wkeViewSettings)",
+	"void *": "c_void_p",
+	"wkeMenuItemId": "c_int",										/*enum->c_int*/
+	"const wkeProxy*": "POINTER(wkeProxy)",
+	"wkeProxy":  "wkeProxy",
+	"HWND": "_LRESULT",
+	"void*": "c_void_p",
+	"wkeWebFrameHandle": "c_void_p",				/*typedef void* wkeWebFrameHandle*/
+	"wkeMemBuf*":"POINTER(wkeMemBuf)",
+	"size_t": "_LRESULT",
+	"HDC": "_LRESULT",
+	"wkeCookieVisitor": "CFUNCTYPE(c_bool,c_void_p,c_char_p,c_char_p,c_char_p,c_char_p,c_int,c_int,POINTER(c_int))",/*typedef bool(WKE_CALL_TYPE * wkeCookieVisitor)(void* params,const char* name,const char* value,const char* domain,const char* path, int secure,int httpOnly, int* expires );*/
+	"wkeCookieCommand": "c_int",										/*enum->c_int*/
+	"const WCHAR*": "c_wchar_p",
+	"UINT": "c_uint",
+	"WPARAM": "_LRESULT",
+	"LPARAM": "_LRESULT",
+	"LRESULT*": "c_void_p",
+	"wkeRect*": "POINTER(wkeRect)",
+	"wkeString": "c_char_p",
+	"const POINT*": "POINTER(wkePoint)",
+	"wkeString*": "POINTER(c_char_p)",
+	"wkeTempCallbackInfo*": "POINTER(WKETempCallbackInfo)",
+	"wkeOnShowDevtoolsCallback": "CFUNCTYPE(None,_LRESULT,c_void_p)",/*typedef void(WKE_CALL_TYPE*wkeOnShowDevtoolsCallback)(wkeWebView webView, void* param);*/
+	"wkeCaretChangedCallback": "CFUNCTYPE(None,_LRESULT,c_void_p,POINTER(wkeRect))", /*typedef void(WKE_CALL_TYPE*wkeCaretChangedCallback)(wkeWebView webView, void* param, const wkeRect* r);*/
+	"wkeTitleChangedCallback": "CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p)", /*typedef void(WKE_CALL_TYPE*wkeTitleChangedCallback)(wkeWebView webView, void* param, const wkeString title);*/
+	"wkeURLChangedCallback": "CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p)", /*typedef void(WKE_CALL_TYPE*wkeURLChangedCallback)(wkeWebView webView, void* param, const wkeString url);*/
+	"wkeURLChangedCallback2": "CFUNCTYPE(None,_LRESULT,c_void_p,c_void_p,c_char_p)",/*typedef void(WKE_CALL_TYPE*wkeURLChangedCallback2)(wkeWebView webView, void* param, wkeWebFrameHandle frameId, const wkeString url);*/
+	"wkePaintUpdatedCallback": "CFUNCTYPE(None,_LRESULT,c_void_p,_LRESULT,c_int,c_int,c_int,c_int)",/*typedef void(WKE_CALL_TYPE*wkePaintUpdatedCallback)(wkeWebView webView, void* param, const HDC hdc, int x, int y, int cx, int cy);*/
+	"wkePaintBitUpdatedCallback": "CFUNCTYPE(None,_LRESULT,c_void_p,c_void_p,POINTER(wkeRect),c_int,c_int)",/*typedef void(WKE_CALL_TYPE*wkePaintBitUpdatedCallback)(wkeWebView webView, void* param, const void* buffer, const wkeRect* r, int width, int height);*/
+	"wkeAlertBoxCallback": "CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p)",/*typedef void(WKE_CALL_TYPE*wkeAlertBoxCallback)(wkeWebView webView, void* param, const wkeString msg);*/
+	"wkeConfirmBoxCallback": "CFUNCTYPE(c_bool,_LRESULT,c_void_p,c_char_p)",/*typedef bool(WKE_CALL_TYPE*wkeConfirmBoxCallback)(wkeWebView webView, void* param, const wkeString msg);*/
+	"wkePromptBoxCallback": "CFUNCTYPE(c_bool,_LRESULT,c_void_p,c_char_p,c_char_p,c_char_p)",/*typedef bool(WKE_CALL_TYPE*wkePromptBoxCallback)(wkeWebView webView, void* param, const wkeString msg, const wkeString defaultResult, wkeString result);*/
+	"wkeNavigationCallback": "CFUNCTYPE(c_bool,_LRESULT,c_void_p,c_int,c_char_p)",/*typedef bool(WKE_CALL_TYPE*wkeNavigationCallback)(wkeWebView webView, void* param, wkeNavigationType navigationType, wkeString url);*/
+	"wkeCreateViewCallback": "CFUNCTYPE(_LRESULT,_LRESULT,c_void_p,c_int,c_char_p,POINTER(wkeWindowFeatures))",/*typedef wkeWebView(WKE_CALL_TYPE*wkeCreateViewCallback)(wkeWebView webView, void* param, wkeNavigationType navigationType, const wkeString url, const wkeWindowFeatures* windowFeatures);*/
+	"wkeDocumentReadyCallback": "CFUNCTYPE(None,_LRESULT,c_void_p)",/*typedef void(WKE_CALL_TYPE*wkeDocumentReadyCallback)(wkeWebView webView, void* param);*/
+	"wkeDocumentReady2Callback": "CFUNCTYPE(None,_LRESULT,c_void_p,c_void_p)",/*typedef void(WKE_CALL_TYPE*wkeDocumentReady2Callback)(wkeWebView webView, void* param, wkeWebFrameHandle frameId);*/
+	"wkeLoadingFinishCallback": "CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p,c_int,c_char_p)",/*typedef void(WKE_CALL_TYPE*wkeLoadingFinishCallback)(wkeWebView webView, void* param, const wkeString url, wkeLoadingResult result, const wkeString failedReason);*/
+	"wkeDownloadCallback": "CFUNCTYPE(c_bool,_LRESULT,c_void_p,c_char_p)",/*typedef bool(WKE_CALL_TYPE*wkeDownloadCallback)(wkeWebView webView, void* param, const char* url);*/
+	"wkeDownload2Callback": "CFUNCTYPE(wkeNetJobDataBind,_LRESULT,c_void_p,c_size_t,c_char_p,c_char_p,c_char_p,c_void_p,POINTER(wkeNetJobDataBind))",/*typedef wkeDownloadOpt(WKE_CALL_TYPE*wkeDownload2Callback)(wkeWebView webView, void* param,size_t expectedContentLength,const char* url, const char* mime, const char* disposition, wkeNetJob job, wkeNetJobDataBind* dataBind);*/
+	"wkeConsoleCallback": "CFUNCTYPE(None,_LRESULT,c_void_p,c_uint,c_char_p,c_char_p,c_int,c_char_p)",/*typedef void(WKE_CALL_TYPE*wkeConsoleCallback)(wkeWebView webView, void* param, wkeConsoleLevel level, const wkeString message, const wkeString sourceName, unsigned sourceLine, const wkeString stackTrace);*/
+	"wkeCallUiThread": "CFUNCTYPE(None,CFUNCTYPE(None,_LRESULT,c_void_p),c_void_p)",/*typedef void(WKE_CALL_TYPE*wkeCallUiThread)(wkeWebView webView, wkeOnCallUiThread func, void* param);*/
+	"wkeLoadUrlBeginCallback": "CFUNCTYPE(c_bool,_LRESULT,c_void_p,c_char_p,c_void_p)",/*typedef bool(WKE_CALL_TYPE*wkeLoadUrlBeginCallback)(wkeWebView webView, void* param, const utf8* url, wkeNetJob job);*/
+	"wkeLoadUrlEndCallback": "CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p,c_void_p,c_void_p,c_int)",/*typedef void(WKE_CALL_TYPE*wkeLoadUrlEndCallback)(wkeWebView webView, void* param, const utf8* url, wkeNetJob job, void* buf, int len);*/
+	"wkeLoadUrlHeadersReceivedCallback": "CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p,c_void_p)",/*typedef void(WKE_CALL_TYPE*wkeLoadUrlHeadersReceivedCallback)(wkeWebView webView, void* param, const utf8* url, wkeNetJob job);*/
+	"wkeLoadUrlFinishCallback": "CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p,c_void_p,c_int)",/*typedef void(WKE_CALL_TYPE*wkeLoadUrlFinishCallback)(wkeWebView webView, void* param, const utf8* url, wkeNetJob job, int len);*/
+	"wkeLoadUrlFailCallback": "CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p,c_void_p)",/*typedef void(WKE_CALL_TYPE*wkeLoadUrlFailCallback)(wkeWebView webView, void* param, const utf8* url, wkeNetJob job);*/
+	"wkeDidCreateScriptContextCallback": "CFUNCTYPE(None,_LRESULT,c_void_p,c_void_p,c_void_p,c_int,c_int)",/*typedef void(WKE_CALL_TYPE*wkeDidCreateScriptContextCallback)(wkeWebView webView, void* param, wkeWebFrameHandle frameId, void* context, int extensionGroup, int worldId);*/
+	"wkeWillReleaseScriptContextCallback": "CFUNCTYPE(None,_LRESULT,c_void_p,c_void_p,c_void_p,c_int)",/*typedef void(WKE_CALL_TYPE*wkeWillReleaseScriptContextCallback)(wkeWebView webView, void* param, wkeWebFrameHandle frameId, void* context, int worldId);*/
+	"wkeWindowClosingCallback": "CFUNCTYPE(c_bool,_LRESULT,c_void_p)",/*typedef bool(WKE_CALL_TYPE*wkeWindowClosingCallback)(wkeWebView webWindow, void* param);*/
+	"wkeWindowDestroyCallback": "CFUNCTYPE(None,_LRESULT,c_void_p)",/*typedef void(WKE_CALL_TYPE*wkeWindowDestroyCallback)(wkeWebView webWindow, void* param);*/
+	"wkeDraggableRegionsChangedCallback": "CFUNCTYPE(None,_LRESULT,c_void_p,POINTER(wkeDraggableRegion),c_int)", /*typedef void(WKE_CALL_TYPE*wkeDraggableRegionsChangedCallback)(wkeWebView webView, void* param, const wkeDraggableRegion* rects, int rectCount);*/
+	"wkeWillMediaLoadCallback":"CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p,POINTER(wkeMediaLoadInfo))",/*typedef void(WKE_CALL_TYPE*wkeWillMediaLoadCallback)(wkeWebView webView, void* param, const char* url, wkeMediaLoadInfo* info);*/
+	"wkeStartDraggingCallback": "CFUNCTYPE(None,_LRESULT,c_void_p,c_void_p,POINTER(wkeWebDragData),c_uint,c_void_p,POINTER(wkePoint))",/*typedef void(WKE_CALL_TYPE*wkeStartDraggingCallback)(wkeWebView webView,void* param, wkeWebFrameHandle frame,const wkeWebDragData* data,wkeWebDragOperationsMask mask, const void* image, const wkePoint* dragImageOffset);*/
+	"wkeOnPrintCallback": "CFUNCTYPE(None,_LRESULT,c_void_p,c_void_p,c_void_p)",/*typedef void(WKE_CALL_TYPE*wkeOnPrintCallback)(wkeWebView webView, void* param, wkeWebFrameHandle frameId, void* printParams);*/
+	"wkeUiThreadPostTaskCallback": "CFUNCTYPE(c_int,_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p),c_void_p)",/*typedef int(WKE_CALL_TYPE*wkeUiThreadPostTaskCallback)(HWND hWnd, wkeUiThreadRunCallback callback, void* param);*/
+	"wkeOnScreenshot": "CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p,c_size_t)",/*typedef void(WKE_CALL_TYPE*wkeOnScreenshot)(wkeWebView webView, void* param, const char* data, size_t size);typedef void(WKE_CALL_TYPE*wkeUiThreadRunCallback)(HWND hWnd, void* param);*/
+	"wkeOnOtherLoadCallback": "CFUNCTYPE(None,_LRESULT,c_void_p,c_int,POINTER(wkeTempCallbackInfo))",/*typedef void(WKE_CALL_TYPE*wkeOnOtherLoadCallback)(wkeWebView webView, void* param, wkeOtherLoadType type, wkeTempCallbackInfo* info);*/
+	"wkeOnContextMenuItemClickCallback": "CFUNCTYPE(c_bool,_LRESULT,c_void_p,c_int,c_int,c_void_p,c_void_p)",/*typedef bool(WKE_CALL_TYPE* wkeOnContextMenuItemClickCallback)(wkeWebView webView, void* param, wkeOnContextMenuItemClickType type, wkeOnContextMenuItemClickStep step, wkeWebFrameHandle frameId,void* info);*/
+	"wkeNetResponseCallback": "CFUNCTYPE(c_bool,_LRESULT,c_void_p,c_char_p,c_void_p)", /*typedef bool(WKE_CALL_TYPE*wkeNetResponseCallback)(wkeWebView webView, void* param, const utf8* url, wkeNetJob job);*/
+	"wkeOnNetGetFaviconCallback": "CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p,POINTER(wkeMemBuf))",/*typedef void(WKE_CALL_TYPE*wkeOnNetGetFaviconCallback)(wkeWebView webView, void* param, const utf8* url, wkeMemBuf* buf);*/
+	"wkeNodeOnCreateProcessCallback": "CFUNCTYPE(None,_LRESULT,c_void_p,c_wchar_p,c_wchar_p,POINTER(STARTUPINFOW))", /*typedef void(__stdcall *wkeNodeOnCreateProcessCallback)(wkeWebView webView, void* param, const WCHAR* applicationPath, const WCHAR* arguments, STARTUPINFOW* startup);*/
+	"wkeOnPluginFindCallback": "CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p,c_void_p,c_void_p,c_void_p)",	/*typedef void(WKE_CALL_TYPE*wkeOnPluginFindCallback)(wkeWebView webView, void* param, const utf8* mime, void* initializeFunc, void* getEntryPointsFunc, void* shutdownFunc);*/
+	"const wkeUrlRequestCallbacks*": "POINTER(wkeUrlRequestCallbacks)",
+	"const wkeSlist*": "POINTER(wkeSlist)",
+	"blinkWebURLRequestPtr": "c_void_p",	/* wkeWebUrlRequest unknow  */
+	"wkeWebUrlRequestPtr": "c_void_p",	/* wkeWebUrlRequest unknow  */
+	"const blinkWebURLRequestPtr": "c_void_p",	/* wkeWebUrlRequest unknow  */
+	"wkeWebUrlResponsePtr": "c_void_p", /* unknow */
+	"const wkeScreenshotSettings*": "POINTER(wkeScreenshotSettings)",
+	"wkeNetJob":  "c_void_p",			/*typedef void* wkeNetJob;*/
+	"wkeRequestType": "c_int",		/*enum->c_int*/
+	"__int64": "c_longlong",
+	"wkePostBodyElements*": "POINTER(wkePostBodyElements)",
+	"wkePostBodyElement*": "POINTER(wkePostBodyElement)",
+	"v8ContextPtr": "c_void_p",		/*typedef void* v8ContextPtr;*/
+	"v8Isolate": "c_void_p",	/*typedef void* v8Isolate;*/
+	"wkeWindowType": "c_int",		/* enum->c_int*/
+	"const wkeWindowCreateInfo*": "POINTER(wkeWindowCreateInfo)",
+	"wkeWebDragOperation": "c_int",	/* enum->c_int*/
+	"const wkeWebDragData*": "POINTER(wkeWebDragData)",
+	"wkeWebDragOperationsMask": "c_int",	/*typedef wkeWebDragOperation wkeWebDragOperationsMask;*/
+	"const wkePdfDatas*": "POINTER(wkePdfDatas)",
+	"const wkePrintSettings*": "POINTER(wkePrintSettings)",
+	"const wkeMemBuf*": "POINTER(wkeMemBuf)",
+	"wkeMediaPlayerFactory": "CFUNCTYPE(c_void_p,_LRESULT,c_void_p,c_void_p,c_void_p)",	/*typedef wkeMediaPlayer(WKE_CALL_TYPE* wkeMediaPlayerFactory)(wkeWebView webView, wkeMediaPlayerClient client, void* npBrowserFuncs, void* npPluginFuncs); wkeMediaPlayerClient client unknow */
+	"wkeOnIsMediaPlayerSupportsMIMEType": "CFUNCTYPE(c_bool,c_char_p)",		/*typedef bool(WKE_CALL_TYPE* wkeOnIsMediaPlayerSupportsMIMEType)(const utf8* mime);*/
+	"size_t*": "POINTER(c_size_t)",
+	"jsNativeFunction":  "CFUNCTYPE(c_longlong,c_void_p)",				/*typedef jsValue(JS_CALL* jsNativeFunction) (jsExecState es);*/
+	"wkeJsNativeFunction": "CFUNCTYPE(c_longlong,c_void_p,c_void_p)",			/*typedef jsValue(WKE_CALL_TYPE* wkeJsNativeFunction) (jsExecState es, void* param);*/
+	"jsType": "c_int",							/*enum->c_int*/
+	"double": "c_double",
+	"jsData*": "POINTER(wkeJsData)",			/*Structure*/
+	"jsKeys*": "POINTER(wkeJsKeys)",
+	"jsValue*": "POINTER(c_longlong)",										/*typedef __int64 jsValue;*/
+	"jsExceptionInfo*": "POINTER(wkeJsExceptionInfo)"		/*Structure*/
+}

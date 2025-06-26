@@ -2,6 +2,22 @@
 
 # V0.1
 
+## 2025/02/16 v0.1.7
+开始修复x64下兼容性问题。miniblink.py/MiniblinkInit()关于cdll中一些接口函数的省略了部分形参的声明，在32位下缺省为c_int,在x64下缺省c_int将与minibilink.dll不一致导致出错
+
+            X86     X64
+BOOL        1       1
+CHAR        1       1
+SHORT       2       2
+INT         4       4
+LONG        4       4
+LONGLONG    4       4
+FLOAT       4       4
+DOUBLE      8       8
+PRT         4       8
+
+在x64系统中，HWND是窗口句柄的数据类型，用于标识窗口对象。它是一个64位长的整数
+
 ## 2025/02/16 v0.1.6
 增加setup.cfg 配置
 setup
