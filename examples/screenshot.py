@@ -25,7 +25,7 @@ def main():
     def OnCloseEvent(context,*args,**kwargs):
         sc = context["webview"].snap
         sc.capture()
-        sc.saveAsPng("screenshot.png")
+        sc.saveAsPng(f"{father_folder}/build/screenshot.png")
         win32gui.PostQuitMessage(0)
         return True
     

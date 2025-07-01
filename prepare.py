@@ -87,23 +87,55 @@ def strip_json_comments(json_string):
     )
     return re.sub(pattern, replace_with_space, json_string)
 
+def read_json_with_comment(name):
+    ctypeTable = {}
+    ctypeCommentTable = {}
+    def strips(m):
+        m = m.strip()
+        m = m.strip("\"")
+        return m
+    if os.path.exists(name):
+        with open(name,"r",encoding="utf-8") as f :  
+            content = f.read()
+            #ctypeTable = json.loads(strip_json_comments(content))
+            lines = content.split("\n")
+           
+            for line in lines:
+                line = line.strip('\t')
+                i = line.find(":")
+                j = line.rfind("\",")
+                k = line.rfind("/*")
+
+                p = strips(line[0:i])
+                q = strips(line[i+1:j])
+                m = strips(line[k:])
+
+                if p =="":
+                    continue
+
+                if q!= "":
+                    ctypeTable[p]=q
+
+                if m !=',' and m !='' :
+                    ctypeCommentTable[p]=m
 
 
-
-
-
-
+    return ctypeTable,ctypeCommentTable
+          
+def read_json_without_comment(name):
+    ctypeTable = {}
+    if os.path.exists(name):
+        with open(name,"r",encoding="utf-8") as f :  
+             content = f.read()
+             ctypeTable = json.loads(strip_json_comments(content))
+    return ctypeTable
 
 def translate():
     """
 
     
     """
-    ctypeTable ={    
-        }
-    if os.path.exists("docs\\source\\wke.h.json"):
-        with open("docs\\source\\wke.h.json","r",encoding="utf-8") as f :  
-            ctypeTable = json.loads(strip_json_comments(f.read()))
+    ctypeTable,ctypeCommentTable = read_json_with_comment("docs\\source\\wke.h.json")
 
     def translateCtype(c):
         if c not in ctypeTable:
@@ -149,8 +181,11 @@ def translate():
                 func = words[1].strip()
                 explain = words[-1].strip()
                 explain=explain.strip("\"")
+                if explain!="":
+                    explain = f"//{explain}"
    
                 '''
+                #生成wke.h.json
                 #print(f"#{res[0]} {func}(")
                 print(f"{res[1]} {func}(",end="")
                 for a in args:
@@ -160,7 +195,8 @@ def translate():
                 else:
                     print(")")
                 '''
-                print(f"#{explain}")
+               
+                print(f"#{res[0]} {func}({(",".join(words[2:-1])).strip()}){explain}")
                 print(f"mb.{func}.argtypes = [",end="")
                 c = [a[2] for a in args]
                 #for a in args:
@@ -168,7 +204,9 @@ def translate():
                 print(f"{",".join(c)}]")
 
                 if res[1]!="None":
-                    print(f"mb.{func}.restype = {res[1]}")
+                    print(f"mb.{func}.restype = {res[1]}\n")
+                else:
+                    print("\n")
 
 
         msg = json.dumps(ctypeTable,ensure_ascii=False,indent=4)

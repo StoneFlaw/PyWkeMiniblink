@@ -43,7 +43,7 @@
 	"wkeString": "c_char_p",
 	"const POINT*": "POINTER(wkePoint)",
 	"wkeString*": "POINTER(c_char_p)",
-	"wkeTempCallbackInfo*": "POINTER(WKETempCallbackInfo)",
+	"wkeTempCallbackInfo*": "POINTER(wkeTempCallbackInfo)",
 	"wkeOnShowDevtoolsCallback": "CFUNCTYPE(None,_LRESULT,c_void_p)",/*typedef void(WKE_CALL_TYPE*wkeOnShowDevtoolsCallback)(wkeWebView webView, void* param);*/
 	"wkeCaretChangedCallback": "CFUNCTYPE(None,_LRESULT,c_void_p,POINTER(wkeRect))", /*typedef void(WKE_CALL_TYPE*wkeCaretChangedCallback)(wkeWebView webView, void* param, const wkeRect* r);*/
 	"wkeTitleChangedCallback": "CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p)", /*typedef void(WKE_CALL_TYPE*wkeTitleChangedCallback)(wkeWebView webView, void* param, const wkeString title);*/
@@ -93,7 +93,6 @@
 	"const wkeScreenshotSettings*": "POINTER(wkeScreenshotSettings)",
 	"wkeNetJob":  "c_void_p",			/*typedef void* wkeNetJob;*/
 	"wkeRequestType": "c_int",		/*enum->c_int*/
-	"__int64": "c_longlong",
 	"wkePostBodyElements*": "POINTER(wkePostBodyElements)",
 	"wkePostBodyElement*": "POINTER(wkePostBodyElement)",
 	"v8ContextPtr": "c_void_p",		/*typedef void* v8ContextPtr;*/
@@ -116,5 +115,6 @@
 	"jsData*": "POINTER(wkeJsData)",			/*Structure*/
 	"jsKeys*": "POINTER(wkeJsKeys)",
 	"jsValue*": "POINTER(c_longlong)",										/*typedef __int64 jsValue;*/
-	"jsExceptionInfo*": "POINTER(wkeJsExceptionInfo)"		/*Structure*/
+	"jsExceptionInfo*": "POINTER(wkeJsExceptionInfo)",		/*Structure*/
+	"__int64": "c_longlong"
 }

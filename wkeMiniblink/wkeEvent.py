@@ -205,7 +205,7 @@ class WkeEvent():
         eventid = self._on(pwebview,'onURLChanged2',func,param)
         return self.dll.wkeOnURLChanged2(pwebview.cId,self._wkeURLChangedCallback2,eventid)
 
-    @WkeMethod(CFUNCTYPE(None, _LRESULT, _LRESULT,c_int,c_void_p))
+    #@WkeMethod(CFUNCTYPE(None, _LRESULT, _LRESULT,c_int,c_void_p))
     def _wkeURLChangedCallback2(self,cwebview,param,frameId,url):
         url=self.dll.wkeGetStringW(url)
         return self._callback(cwebview,param,frameId=frameId,url=url)
