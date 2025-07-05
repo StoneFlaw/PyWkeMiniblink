@@ -1,11 +1,18 @@
 # 简介
 
+
+
+**关于PyWkeMiniblink**
+
+PyWkeMiniblink 是 [Miniblink](https://weolar.github.io/miniblink/)的Python绑定，参考了上游项目[MBPython](https://github.com/lochen88/MBPython)。
+
 PyWkeMiniblink： [项目地址](https://github.com/StoneFlaw/PyWkeMiniblink)  /  [在线文档](https://pywkeminiblink.readthedocs.io/zh-cn/latest/)  / [PYPI主页](https://pypi.org/project/WkeMiniblink/)
 
-
-PyWkeMiniblink 是 [Miniblink](https://weolar.github.io/miniblink/)的Python绑定，参考源了上游项目[MBPython](https://github.com/lochen88/MBPython)。
+**关于Miniblink**
 
 Miniblink 是 chromium的精简版，删除了音视频功能,原接口参见[官方接口文档](https://miniblink.net/views/doc/index.html),更完整的参见docs/source/wke.h 。
+
+
 
 # 使用
 
@@ -19,24 +26,6 @@ pip3 install WkeMiniblink-xx-py3-none-any.whl
 #从PYPI安装
 pip3 install WkeMiniblink
 ```
-
-## 发布
-
-### pyinstaller
-
-(Pyinstaller>=6.0.0 )
-
-- 在Pyinstaller打包 one dir（-D 目录模式）时，除可执行文件外，其余文件都将被转移到 _internal 文件夹
-
-    以此为Package的根目录
-
-- 在Pyinstaller打包 one file （-F 文件模式）时，除可执行文件外，其余文件都将被转移到一个临时文件夹
-
-    以此为Package的根目录
-
-- 在Python解释器模式下,以Lib\site-packages
-
-    以此为Package的根目录
 
 
 
@@ -312,9 +301,39 @@ WebView.bind(父窗口hwnd,x,y,w,h)在一个已经创建的父窗口hwnd上绑�
 
 参见wkeWin32ProcMsg中WebViewWithProcHwnd和example/bindWebview.py
 
-### Ctypes数据类型
+# Ctypes数据类型
 
 参见prepare.py.translate()与wke.h.json
+
+
+
+
+
+# 发布
+
+## 动态库路径
+
+打包模式：Package根目录
+
+脚本模式：python.exe所在在目录
+
+
+
+## pyinstaller
+
+(Pyinstaller>=6.0.0 )
+
+- 在Pyinstaller打包 one dir（-D 目录模式）时，除可执行文件外，其余文件都将被转移到 _internal 文件夹
+
+    即Package根目录
+
+- 在Pyinstaller打包 one file （-F 文件模式）时，除可执行文件外，其余文件都将被转移到一个临时文件夹
+
+    即Package根目录
+
+- 在Python解释器模式下,以Lib\site-packages
+
+    以此为Package的根目录
 
 
 
@@ -368,6 +387,10 @@ wkePromptBoxCallback的最后一个参数为wkeString,需要作为传参返回,�
 # TODO
 
 Wke/WebView的job/request有些地方未修订验证
+
+下载/插件/通信事件回调 暂都未验证
+
+wkeEvent的注释待梳理
 
 
 # [Contact Us](mailto://wyh917@163.com)

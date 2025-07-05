@@ -369,6 +369,10 @@ wkePromptBoxCallback的最后一个参数为wkeString,需要作为传参返回,�
 
 Wke/WebView的job/request有些地方未修订验证
 
+下载/插件/通信事件回调 暂都未验证
+
+wkeEvent的注释待梳理
+
 
 # [Contact Us](mailto://wyh917@163.com)
 

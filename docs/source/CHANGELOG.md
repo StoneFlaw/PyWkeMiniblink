@@ -8,6 +8,8 @@
 
 为prepare.py增加输出wke.h.json，以及输出MiniblinkInit函数声明的功能
 
+调整wkeEvent.py中的回调函数中额外参数在**kwargs中，而不是*args中，避免32/64位下错乱不一致
+
 ### wkeGetString
 
 wkeEvent.py中32位下wkeGetStringW(str)运行正常,但是64位会c函数内部读异常。

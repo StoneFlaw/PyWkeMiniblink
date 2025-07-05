@@ -72,6 +72,7 @@ def main():
     
     webview.onURLChanged2(OnEvent,'URL Changed')
     webview.onDocumentReady2(OnEvent,'Document is Ready')
+    webview.onTitleChanged(OnEvent,'Document is Ready')
     webview.onMouseOverUrlChanged(OnEvent,'Mouse over URL')
 
     webview.onAlertBox(OnEvent,'AlertBox')
