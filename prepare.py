@@ -172,11 +172,11 @@ def translate():
                     pos = w.rfind(" ")
                     if pos < 0 or pos >= len(w) - 1:
                         raise SyntaxError(f"Error process @ {line}")
-                    a1,a2 = [w[0:pos],w[pos+1:]]
+                    a0,a1 = [w[0:pos],w[pos+1:]]
                     
-                    a3 = translateCtype(a1)
+                    a2 = translateCtype(a0)
 
-                    args.append([a1,a2,a3])
+                    args.append([a0,a1,a2])
   
                 func = words[1].strip()
                 explain = words[-1].strip()
@@ -197,10 +197,15 @@ def translate():
                 '''
                
                 print(f"#{res[0]} {func}({(",".join(words[2:-1])).strip()}){explain}")
+                
+                c = []
+                for a in args:
+                    if a[2].startswith("CFUNCTYPE"):
+                        print(f"#{a[0]} {a[2]} \n#{ctypeCommentTable[a[0]]}")
+                        
+                    c.append(a[2])
+
                 print(f"mb.{func}.argtypes = [",end="")
-                c = [a[2] for a in args]
-                #for a in args:
-                #    print(f"{a[2]},",end="")
                 print(f"{",".join(c)}]")
 
                 if res[1]!="None":

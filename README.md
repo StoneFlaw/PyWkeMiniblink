@@ -40,7 +40,7 @@ pip3 install WkeMiniblink
 
 
 
-wkeMiniblink 搜索 解释器目录/Package的根目录
+wkeMiniblink 搜索 解释器目录/Package的根目录，具体参见find_miniblink()
 
 
 
@@ -238,30 +238,44 @@ Example:
 context = {"id":eventid,"param":param,"func":func,"webview":webview,"id":webview.cId,"event":event}
 ```
 
-​		不同的事件有特定的扩展参数，例如Paint事件
+​		**其中param是注册回调函数绑定的任意python object对象，func是绑定的python回调函数**
 
-```python
-OnPaintEvent(conext:dict,args=[hdc:int,x:int,y:int,cx:int,cy:int],kwargs=None)
-```
+​		不同的事件有特定的扩展参数，都写在kwargs中，例如Alert事件中通知消息就在kwargs["msg"]中
 
 Example:
 
 ```python
-Wke.init()
-webview = WebWindow()
-webview.create(0,0,0,800,600)
-def OnEvent(context,*args,**kwargs):
-    param = context["param"]
-	print('param',param,'args:',args,'kwargs:',kwargs)
-	return 0
-event = WkeEvent() #或者event = Wke.event
-event.onURLChanged2(webview,OnEvent,'onURLChanged2')
-webview.loadURLW('https://baidu.com')
-webview.showWindow(True)
-Wke.runMessageLoop()  
+#//python 事件响应函数void OnAlertEvent(context:dict,kwargs={msg:str}) 
+#/*typedef void(WKE_CALL_TYPE*wkeAlertBoxCallback)(wkeWebView webView, void* param, const wkeString msg);*/
+# OnAlertCallback回调函数执行时包含: kwargs["msg"]
+def main():
+	Wke.init()
+    Wke.setCookieAndStagePath(cookie=f'{father_folder }/build/cookie.dat',localStage=f'{father_folder }/build/LocalStage')
+    webview = WebWindow()
+    webview.create(0,0,0,800,600)
+
+    def OnAlertEvent(context,*args,**kwargs):
+        param = context["param"]
+        print(f"{str(param)} \nargs:{pformat(args)}\nkwargs:{pformat(kwargs)}\n=======================\n")
+        msg = kwargs["msg"]
+        windowTitle = ""
+        result  = win32gui.MessageBox(0, msg, windowTitle, win32con.MB_OK)
+        return  result
+
+    def OnCloseEvent(context,*args,**kwargs):
+        win32gui.PostQuitMessage(0)
+        return True
+
+    webview.onAlertBox(OnAlertEvent,param='Alert')
+    webview.onWindowClosing(OnCloseEvent,param='App Quit')
+    #webview.loadURL('https://www.w3school.com.cn/tiy/t.asp?f=jsck_alert_2')
+    webview.loadFile(f'{father_folder}/res/testdata/alert.html')
+    
+    webview.showWindow(True)
+    Wke.runMessageLoop()
 ```
 
-Webview绑定了一系列翻译方法，实现下面二者等价:
+Webview绑定了一系列事件回调函数注册方法，和使用全局Wke.event管理器注册等价:
 
 ```python
 Wke.event.OnPaintEvent(webview,param,*args,**kwargs)
@@ -290,20 +304,70 @@ WebView/WebWindows的runJsCode/runJsFile/runJsFunc方法支持Python端在网页
 
 Miniblink supports NPAPI plugins.
 
+未验证
+
 # 离屏渲染
 
 WebView.bind(父窗口hwnd,x,y,w,h)在一个已经创建的父窗口hwnd上绑定一个网页视图，然后额外的处理父窗口的消息，以及父窗口到网页视图的绘制。
 
 参见wkeWin32ProcMsg中WebViewWithProcHwnd和example/bindWebview.py
 
+### Ctypes数据类型
+
+参见prepare.py.translate()与wke.h.json
+
+
+
+# 其他问题
+
+### Alert/Prompt/Confirm
+
+需要使用wkeEvent的回调函数额外实现相应的GUI及其返回值控制，参见examples.
+
+## PromptBoxCallback的Py形参和返回值
+
+正常情况下
+
+```
+typedef bool(WKE_CALL_TYPE*wkePromptBoxCallback)(wkeWebView webView, void* param, const wkeString msg, const wkeString defaultResult, wkeString result);
+<<=>>
+CFUNCTYPE(c_bool,_LRESULT,c_void_p,c_char_p,c_char_p,c_void_p)
+```
+
+​      原回调函数返回值为c_bool,为保持形参形式一致,不做按引用传参数带出返回值,取消形参result,而是python的返回值。
+
+​      实际python回调函数返回值为Str(有字符串确定输入)/None(取消输入)
+
+## wkeGetString/wkeSetString/String/StingW
+
+Miniblink文档中String对应utf8*而StringW对应utf16*
+
+wkeEvent.py中32位下wkeGetStringW(str)运行正常,但是64位会c函数内部读异常
+
+现在默认wkeString全部是utf8，改为wkeGetString(str),然后做binary->str的解码
+
+### wkeString的Ctypes参数类型
+
+将只读wkeString 全翻译为c_char_p,方便ctypes自动转换字符串。
+
+如果需要写入wkeString,就翻译为c_void_p (c_char_p自动翻译为None)
+
+```
+#wkeString:c_void_p,text:str
+utf8 = text.encode(encoding)
+l = len(utf8)
+mb.wkeSetString(cast(wkeString,c_char_p),utf8,l)
+```
+
+wkePromptBoxCallback的最后一个参数为wkeString,需要作为传参返回,填入字符串。所以wkeString翻成c_void_p
+
+
+
 
 
 # TODO
 
 Wke/WebView的job/request有些地方未修订验证
-
-pyinstaller尚未调整和验证
-
 
 
 # [Contact Us](mailto://wyh917@163.com)

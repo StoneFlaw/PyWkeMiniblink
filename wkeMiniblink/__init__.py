@@ -4,7 +4,7 @@ from ctypes import c_int,c_longlong
 from platform import architecture
 from pkgutil import extend_path
 
-__version__ = "0.1.16"
+__version__ = "0.1.17"
 __path__ = extend_path(__path__, __name__)
 
 bit=architecture()[0]
@@ -12,6 +12,7 @@ bit=architecture()[0]
 _LRESULT=c_int
 MINIBLINK_DLL_PATH =""
 MINIBLINK_DLL_HANDLE=None
+
 
 miniblink_core_dll = '\\miniblink.dll'
 if bit == '64bit':

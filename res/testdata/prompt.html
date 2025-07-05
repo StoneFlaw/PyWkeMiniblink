@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>Window 对象</h1>
+
+<h2>prompt() 方法</h2>
+
+<p>请点击按钮来演示提示框。</p>
+
+<button onclick="myFunction()">试一试</button>
+
+<p id="demo"></p>
+
+<script>
+function myFunction() {
+  let person = prompt("请输入你的名字", "哈利·波特");
+  if (person != null) {
+    document.getElementById("demo").innerHTML =
+    "Hello " + person + "！您今天怎么样？";
+  }
+  else
+  {
+	document.getElementById("demo").innerHTML =
+    "您什么都没选！";
+  }
+}
+</script>
+
+</body>
+</html>

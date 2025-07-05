@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>Window 对象</h1>
+
+<h2>confirm() 方法</h2>
+
+<p>单击该按钮可显示确认框。</p>
+
+<button onclick="myFunction()">试一试</button>
+
+<p id="demo"></p>
+
+<script>
+function myFunction() {
+  let text;
+  if (confirm("请按按钮！") == true) {
+    text = "您按了确认！";
+  } else {
+    text = "您按了取消！";
+  }
+  document.getElementById("demo").innerHTML = text;
+}
+</script>
+
+</body>
+</html>

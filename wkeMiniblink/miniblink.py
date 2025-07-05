@@ -16,27 +16,45 @@ from ctypes import (
     cdll,
     CFUNCTYPE
 )
-from . import _LRESULT
+from . import _LRESULT,GetMiniblinkDLL,SetMiniblinkDLL
 from .wkeStruct import *
+
+mb = GetMiniblinkDLL()
+
+def wkeGetString(binary,encoding='utf-8'):
+    global mb
+    b = mb.wkeGetString(binary)
+    if b :
+        return b.decode(encoding)
+    return ""
+
+def wkeSetString(wkeStr,text,encoding='utf-8'):
+    global mb
+    utf8 = text.encode(encoding)
+    l = len(utf8)
+    b = mb.wkeSetString(wkeStr,utf8,l)
+    return b
+
+def wkeCreateString(text,encoding='utf-8'):
+    global mb
+    utf8 = text.encode(encoding)
+    l = len(utf8)
+    wkeStr = mb.wkeCreateString(utf8,l)
+    return wkeStr
 
 def MiniblinkInit(_path):   
     '''
-    wkeLoadingResult -> enum ->c_uint
-    wkeConsoleLevel -> enum -> c_uint
-    wkeNavigationType -> enum -> c_uint
-    wkeWindowType -> enum -> c_uint
-    wkeString ->CString -> c_char_p
-    wkeWebFrameHandle ->c_void_p
-    wkeNetJob -> c_void_p
-    utf8* -> typedef char utf8 ->c_char_p
-
+    类型转换见wke.h/wke.h.json/prepare.py
     '''  
+    global mb
     mb = cdll.LoadLibrary(_path)
+
+    SetMiniblinkDLL(mb)
+
     mb.wkeInit()
 
     #void wkeShutdown()
     mb.wkeShutdown.argtypes = []
-
 
     #void wkeShutdownForDebug()//测试使用，不了解千万别用！
     mb.wkeShutdownForDebug.argtypes = []
@@ -59,6 +77,16 @@ def MiniblinkInit(_path):
 
 
     #void wkeSetFileSystem(WKE_FILE_OPEN pfnOpen, WKE_FILE_CLOSE pfnClose, WKE_FILE_SIZE pfnSize, WKE_FILE_READ pfnRead, WKE_FILE_SEEK pfnSeek)
+    #WKE_FILE_OPEN CFUNCTYPE(c_void_p,c_char_p) 
+    #/*typedef void* (WKE_CALL_TYPE *FILE_OPEN_) (const char* path);*/
+    #WKE_FILE_CLOSE CFUNCTYPE(None,c_void_p) 
+    #/*typedef void(WKE_CALL_TYPE *FILE_CLOSE_) (void* handle);*/
+    #WKE_FILE_SIZE CFUNCTYPE(c_size_t,c_void_p) 
+    #/*typedef size_t(WKE_CALL_TYPE *FILE_SIZE) (void* handle);*/
+    #WKE_FILE_READ CFUNCTYPE(c_size_t,c_void_p,c_void_p,c_size_t) 
+    #/*typedef int(WKE_CALL_TYPE *FILE_READ) (void* handle, void* buffer, size_t size);*/
+    #WKE_FILE_SEEK CFUNCTYPE(c_size_t,c_void_p,c_int,c_int) 
+    #/*typedef int(WKE_CALL_TYPE *FILE_SEEK) (void* handle, int offset, int origin);*/
     mb.wkeSetFileSystem.argtypes = [CFUNCTYPE(c_void_p,c_char_p),CFUNCTYPE(None,c_void_p),CFUNCTYPE(c_size_t,c_void_p),CFUNCTYPE(c_size_t,c_void_p,c_void_p,c_size_t),CFUNCTYPE(c_size_t,c_void_p,c_int,c_int)]
 
 
@@ -351,6 +379,8 @@ def MiniblinkInit(_path):
 
 
     #void wkeShowDevtools(wkeWebView webView, const wchar_t* path, wkeOnShowDevtoolsCallback callback, void* param)
+    #wkeOnShowDevtoolsCallback CFUNCTYPE(None,_LRESULT,c_void_p) 
+    #/*typedef void(WKE_CALL_TYPE*wkeOnShowDevtoolsCallback)(wkeWebView webView, void* param);*/
     mb.wkeShowDevtools.argtypes = [_LRESULT,c_wchar_p,CFUNCTYPE(None,_LRESULT,c_void_p),c_void_p]
 
 
@@ -599,6 +629,8 @@ def MiniblinkInit(_path):
 
 
     #void wkeVisitAllCookie(wkeWebView webView, void* params, wkeCookieVisitor visitor)
+    #wkeCookieVisitor CFUNCTYPE(c_bool,c_void_p,c_char_p,c_char_p,c_char_p,c_char_p,c_int,c_int,POINTER(c_int)) 
+    #/*typedef bool(WKE_CALL_TYPE * wkeCookieVisitor)(void* params,const char* name,const char* value,const char* domain,const char* path, int secure,int httpOnly, int* expires );*/
     mb.wkeVisitAllCookie.argtypes = [_LRESULT,c_void_p,CFUNCTYPE(c_bool,c_void_p,c_char_p,c_char_p,c_char_p,c_char_p,c_int,c_int,POINTER(c_int))]
 
 
@@ -803,141 +835,212 @@ def MiniblinkInit(_path):
     mb.wkeGetTempCallbackInfo.restype = POINTER(wkeTempCallbackInfo)
 
     #void wkeOnCaretChanged(wkeWebView webView, wkeCaretChangedCallback callback, void* callbackParam)
+    #wkeCaretChangedCallback CFUNCTYPE(None,_LRESULT,c_void_p,POINTER(wkeRect)) 
+    #/*typedef void(WKE_CALL_TYPE*wkeCaretChangedCallback)(wkeWebView webView, void* param, const wkeRect* r);*/
     mb.wkeOnCaretChanged.argtypes = [_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,POINTER(wkeRect)),c_void_p]
 
 
     #void wkeOnMouseOverUrlChanged(wkeWebView webView, wkeTitleChangedCallback callback, void* callbackParam)
+    #wkeTitleChangedCallback CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p) 
+    #/*typedef void(WKE_CALL_TYPE*wkeTitleChangedCallback)(wkeWebView webView, void* param, const wkeString title);*/
     mb.wkeOnMouseOverUrlChanged.argtypes = [_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p),c_void_p]
 
 
     #void wkeOnTitleChanged(wkeWebView webView, wkeTitleChangedCallback callback, void* callbackParam)
+    #wkeTitleChangedCallback CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p) 
+    #/*typedef void(WKE_CALL_TYPE*wkeTitleChangedCallback)(wkeWebView webView, void* param, const wkeString title);*/
     mb.wkeOnTitleChanged.argtypes = [_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p),c_void_p]
 
 
     #void wkeOnURLChanged(wkeWebView webView, wkeURLChangedCallback callback, void* callbackParam)
+    #wkeURLChangedCallback CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p) 
+    #/*typedef void(WKE_CALL_TYPE*wkeURLChangedCallback)(wkeWebView webView, void* param, const wkeString url);*/
     mb.wkeOnURLChanged.argtypes = [_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p),c_void_p]
 
 
     #void wkeOnURLChanged2(wkeWebView webView, wkeURLChangedCallback2 callback, void* callbackParam)
+    #wkeURLChangedCallback2 CFUNCTYPE(None,_LRESULT,c_void_p,c_void_p,c_char_p) 
+    #/*typedef void(WKE_CALL_TYPE*wkeURLChangedCallback2)(wkeWebView webView, void* param, wkeWebFrameHandle frameId, const wkeString url);*/
     mb.wkeOnURLChanged2.argtypes = [_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,c_void_p,c_char_p),c_void_p]
-   
+
+
     #void wkeOnPaintUpdated(wkeWebView webView, wkePaintUpdatedCallback callback, void* callbackParam)
+    #wkePaintUpdatedCallback CFUNCTYPE(None,_LRESULT,c_void_p,_LRESULT,c_int,c_int,c_int,c_int) 
+    #/*typedef void(WKE_CALL_TYPE*wkePaintUpdatedCallback)(wkeWebView webView, void* param, const HDC hdc, int x, int y, int cx, int cy);*/
     mb.wkeOnPaintUpdated.argtypes = [_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,_LRESULT,c_int,c_int,c_int,c_int),c_void_p]
 
 
     #void wkeOnPaintBitUpdated(wkeWebView webView, wkePaintBitUpdatedCallback callback, void* callbackParam)
+    #wkePaintBitUpdatedCallback CFUNCTYPE(None,_LRESULT,c_void_p,c_void_p,POINTER(wkeRect),c_int,c_int) 
+    #/*typedef void(WKE_CALL_TYPE*wkePaintBitUpdatedCallback)(wkeWebView webView, void* param, const void* buffer, const wkeRect* r, int width, int height);*/
     mb.wkeOnPaintBitUpdated.argtypes = [_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,c_void_p,POINTER(wkeRect),c_int,c_int),c_void_p]
 
 
     #void wkeOnAlertBox(wkeWebView webView, wkeAlertBoxCallback callback, void* callbackParam)
+    #wkeAlertBoxCallback CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p) 
+    #/*typedef void(WKE_CALL_TYPE*wkeAlertBoxCallback)(wkeWebView webView, void* param, const wkeString msg);*/
     mb.wkeOnAlertBox.argtypes = [_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p),c_void_p]
 
 
     #void wkeOnConfirmBox(wkeWebView webView, wkeConfirmBoxCallback callback, void* callbackParam)
+    #wkeConfirmBoxCallback CFUNCTYPE(c_bool,_LRESULT,c_void_p,c_char_p) 
+    #/*typedef bool(WKE_CALL_TYPE*wkeConfirmBoxCallback)(wkeWebView webView, void* param, const wkeString msg);*/
     mb.wkeOnConfirmBox.argtypes = [_LRESULT,CFUNCTYPE(c_bool,_LRESULT,c_void_p,c_char_p),c_void_p]
 
 
     #void wkeOnPromptBox(wkeWebView webView, wkePromptBoxCallback callback, void* callbackParam)
-    mb.wkeOnPromptBox.argtypes = [_LRESULT,CFUNCTYPE(c_bool,_LRESULT,c_void_p,c_char_p,c_char_p,c_char_p),c_void_p]
+    #wkePromptBoxCallback CFUNCTYPE(c_bool,_LRESULT,c_void_p,c_char_p,c_char_p,c_char_p) 
+    #/*typedef bool(WKE_CALL_TYPE*wkePromptBoxCallback)(wkeWebView webView, void* param, const wkeString msg, const wkeString defaultResult, wkeString result);*/
+    mb.wkeOnPromptBox.argtypes = [_LRESULT,CFUNCTYPE(c_bool,_LRESULT,c_void_p,c_char_p,c_char_p,c_void_p),c_void_p]
 
 
     #void wkeOnNavigation(wkeWebView webView, wkeNavigationCallback callback, void* param)
+    #wkeNavigationCallback CFUNCTYPE(c_bool,_LRESULT,c_void_p,c_int,c_char_p) 
+    #/*typedef bool(WKE_CALL_TYPE*wkeNavigationCallback)(wkeWebView webView, void* param, wkeNavigationType navigationType, wkeString url);*/
     mb.wkeOnNavigation.argtypes = [_LRESULT,CFUNCTYPE(c_bool,_LRESULT,c_void_p,c_int,c_char_p),c_void_p]
 
 
     #void wkeOnCreateView(wkeWebView webView, wkeCreateViewCallback callback, void* param)
+    #wkeCreateViewCallback CFUNCTYPE(_LRESULT,_LRESULT,c_void_p,c_int,c_char_p,POINTER(wkeWindowFeatures)) 
+    #/*typedef wkeWebView(WKE_CALL_TYPE*wkeCreateViewCallback)(wkeWebView webView, void* param, wkeNavigationType navigationType, const wkeString url, const wkeWindowFeatures* windowFeatures);*/
     mb.wkeOnCreateView.argtypes = [_LRESULT,CFUNCTYPE(_LRESULT,_LRESULT,c_void_p,c_int,c_char_p,POINTER(wkeWindowFeatures)),c_void_p]
 
 
     #void wkeOnDocumentReady(wkeWebView webView, wkeDocumentReadyCallback callback, void* param)
+    #wkeDocumentReadyCallback CFUNCTYPE(None,_LRESULT,c_void_p) 
+    #/*typedef void(WKE_CALL_TYPE*wkeDocumentReadyCallback)(wkeWebView webView, void* param);*/
     mb.wkeOnDocumentReady.argtypes = [_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p),c_void_p]
 
 
     #void wkeOnDocumentReady2(wkeWebView webView, wkeDocumentReady2Callback callback, void* param)
+    #wkeDocumentReady2Callback CFUNCTYPE(None,_LRESULT,c_void_p,c_void_p) 
+    #/*typedef void(WKE_CALL_TYPE*wkeDocumentReady2Callback)(wkeWebView webView, void* param, wkeWebFrameHandle frameId);*/
     mb.wkeOnDocumentReady2.argtypes = [_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,c_void_p),c_void_p]
 
 
     #void wkeOnLoadingFinish(wkeWebView webView, wkeLoadingFinishCallback callback, void* param)
+    #wkeLoadingFinishCallback CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p,c_int,c_char_p) 
+    #/*typedef void(WKE_CALL_TYPE*wkeLoadingFinishCallback)(wkeWebView webView, void* param, const wkeString url, wkeLoadingResult result, const wkeString failedReason);*/
     mb.wkeOnLoadingFinish.argtypes = [_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p,c_int,c_char_p),c_void_p]
 
 
     #void wkeOnDownload(wkeWebView webView, wkeDownloadCallback callback, void* param)
+    #wkeDownloadCallback CFUNCTYPE(c_bool,_LRESULT,c_void_p,c_char_p) 
+    #/*typedef bool(WKE_CALL_TYPE*wkeDownloadCallback)(wkeWebView webView, void* param, const char* url);*/
     mb.wkeOnDownload.argtypes = [_LRESULT,CFUNCTYPE(c_bool,_LRESULT,c_void_p,c_char_p),c_void_p]
 
 
     #void wkeOnDownload2(wkeWebView webView, wkeDownload2Callback callback, void* param)
+    #wkeDownload2Callback CFUNCTYPE(wkeNetJobDataBind,_LRESULT,c_void_p,c_size_t,c_char_p,c_char_p,c_char_p,c_void_p,POINTER(wkeNetJobDataBind)) 
+    #/*typedef wkeDownloadOpt(WKE_CALL_TYPE*wkeDownload2Callback)(wkeWebView webView, void* param,size_t expectedContentLength,const char* url, const char* mime, const char* disposition, wkeNetJob job, wkeNetJobDataBind* dataBind);*/
     mb.wkeOnDownload2.argtypes = [_LRESULT,CFUNCTYPE(wkeNetJobDataBind,_LRESULT,c_void_p,c_size_t,c_char_p,c_char_p,c_char_p,c_void_p,POINTER(wkeNetJobDataBind)),c_void_p]
 
 
     #void wkeOnConsole(wkeWebView webView, wkeConsoleCallback callback, void* param)
+    #wkeConsoleCallback CFUNCTYPE(None,_LRESULT,c_void_p,c_uint,c_char_p,c_char_p,c_int,c_char_p) 
+    #/*typedef void(WKE_CALL_TYPE*wkeConsoleCallback)(wkeWebView webView, void* param, wkeConsoleLevel level, const wkeString message, const wkeString sourceName, unsigned sourceLine, const wkeString stackTrace);*/
     mb.wkeOnConsole.argtypes = [_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,c_uint,c_char_p,c_char_p,c_int,c_char_p),c_void_p]
 
 
     #void wkeSetUIThreadCallback(wkeWebView webView, wkeCallUiThread callback, void* param)
+    #wkeCallUiThread CFUNCTYPE(None,CFUNCTYPE(None,_LRESULT,c_void_p),c_void_p) 
+    #/*typedef void(WKE_CALL_TYPE*wkeCallUiThread)(wkeWebView webView, wkeOnCallUiThread func, void* param);*/
     mb.wkeSetUIThreadCallback.argtypes = [_LRESULT,CFUNCTYPE(None,CFUNCTYPE(None,_LRESULT,c_void_p),c_void_p),c_void_p]
 
 
     #void wkeOnLoadUrlBegin(wkeWebView webView, wkeLoadUrlBeginCallback callback, void* callbackParam)
+    #wkeLoadUrlBeginCallback CFUNCTYPE(c_bool,_LRESULT,c_void_p,c_char_p,c_void_p) 
+    #/*typedef bool(WKE_CALL_TYPE*wkeLoadUrlBeginCallback)(wkeWebView webView, void* param, const utf8* url, wkeNetJob job);*/
     mb.wkeOnLoadUrlBegin.argtypes = [_LRESULT,CFUNCTYPE(c_bool,_LRESULT,c_void_p,c_char_p,c_void_p),c_void_p]
 
 
     #void wkeOnLoadUrlEnd(wkeWebView webView, wkeLoadUrlEndCallback callback, void* callbackParam)
+    #wkeLoadUrlEndCallback CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p,c_void_p,c_void_p,c_int) 
+    #/*typedef void(WKE_CALL_TYPE*wkeLoadUrlEndCallback)(wkeWebView webView, void* param, const utf8* url, wkeNetJob job, void* buf, int len);*/
     mb.wkeOnLoadUrlEnd.argtypes = [_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p,c_void_p,c_void_p,c_int),c_void_p]
 
 
     #void wkeOnLoadUrlHeadersReceived(wkeWebView webView, wkeLoadUrlHeadersReceivedCallback callback, void* callbackParam)
+    #wkeLoadUrlHeadersReceivedCallback CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p,c_void_p) 
+    #/*typedef void(WKE_CALL_TYPE*wkeLoadUrlHeadersReceivedCallback)(wkeWebView webView, void* param, const utf8* url, wkeNetJob job);*/
     mb.wkeOnLoadUrlHeadersReceived.argtypes = [_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p,c_void_p),c_void_p]
 
 
     #void wkeOnLoadUrlFinish(wkeWebView webView, wkeLoadUrlFinishCallback callback, void* callbackParam)
+    #wkeLoadUrlFinishCallback CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p,c_void_p,c_int) 
+    #/*typedef void(WKE_CALL_TYPE*wkeLoadUrlFinishCallback)(wkeWebView webView, void* param, const utf8* url, wkeNetJob job, int len);*/
     mb.wkeOnLoadUrlFinish.argtypes = [_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p,c_void_p,c_int),c_void_p]
 
 
     #void wkeOnLoadUrlFail(wkeWebView webView, wkeLoadUrlFailCallback callback, void* callbackParam)
+    #wkeLoadUrlFailCallback CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p,c_void_p) 
+    #/*typedef void(WKE_CALL_TYPE*wkeLoadUrlFailCallback)(wkeWebView webView, void* param, const utf8* url, wkeNetJob job);*/
     mb.wkeOnLoadUrlFail.argtypes = [_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p,c_void_p),c_void_p]
 
 
     #void wkeOnDidCreateScriptContext(wkeWebView webView, wkeDidCreateScriptContextCallback callback, void* callbackParam)
+    #wkeDidCreateScriptContextCallback CFUNCTYPE(None,_LRESULT,c_void_p,c_void_p,c_void_p,c_int,c_int) 
+    #/*typedef void(WKE_CALL_TYPE*wkeDidCreateScriptContextCallback)(wkeWebView webView, void* param, wkeWebFrameHandle frameId, void* context, int extensionGroup, int worldId);*/
     mb.wkeOnDidCreateScriptContext.argtypes = [_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,c_void_p,c_void_p,c_int,c_int),c_void_p]
 
 
     #void wkeOnWillReleaseScriptContext(wkeWebView webView, wkeWillReleaseScriptContextCallback callback, void* callbackParam)
+    #wkeWillReleaseScriptContextCallback CFUNCTYPE(None,_LRESULT,c_void_p,c_void_p,c_void_p,c_int) 
+    #/*typedef void(WKE_CALL_TYPE*wkeWillReleaseScriptContextCallback)(wkeWebView webView, void* param, wkeWebFrameHandle frameId, void* context, int worldId);*/
     mb.wkeOnWillReleaseScriptContext.argtypes = [_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,c_void_p,c_void_p,c_int),c_void_p]
 
 
     #void wkeOnWindowClosing(wkeWebView webWindow, wkeWindowClosingCallback callback, void* param)
+    #wkeWindowClosingCallback CFUNCTYPE(c_bool,_LRESULT,c_void_p) 
+    #/*typedef bool(WKE_CALL_TYPE*wkeWindowClosingCallback)(wkeWebView webWindow, void* param);*/
     mb.wkeOnWindowClosing.argtypes = [_LRESULT,CFUNCTYPE(c_bool,_LRESULT,c_void_p),c_void_p]
 
 
     #void wkeOnWindowDestroy(wkeWebView webWindow, wkeWindowDestroyCallback callback, void* param)
+    #wkeWindowDestroyCallback CFUNCTYPE(None,_LRESULT,c_void_p) 
+    #/*typedef void(WKE_CALL_TYPE*wkeWindowDestroyCallback)(wkeWebView webWindow, void* param);*/
     mb.wkeOnWindowDestroy.argtypes = [_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p),c_void_p]
 
 
     #void wkeOnDraggableRegionsChanged(wkeWebView webView, wkeDraggableRegionsChangedCallback callback, void* param)
+    #wkeDraggableRegionsChangedCallback CFUNCTYPE(None,_LRESULT,c_void_p,POINTER(wkeDraggableRegion),c_int) 
+    #/*typedef void(WKE_CALL_TYPE*wkeDraggableRegionsChangedCallback)(wkeWebView webView, void* param, const wkeDraggableRegion* rects, int rectCount);*/
     mb.wkeOnDraggableRegionsChanged.argtypes = [_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,POINTER(wkeDraggableRegion),c_int),c_void_p]
 
 
     #void wkeOnWillMediaLoad(wkeWebView webView, wkeWillMediaLoadCallback callback, void* param)
+    #wkeWillMediaLoadCallback CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p,POINTER(wkeMediaLoadInfo)) 
+    #/*typedef void(WKE_CALL_TYPE*wkeWillMediaLoadCallback)(wkeWebView webView, void* param, const char* url, wkeMediaLoadInfo* info);*/
     mb.wkeOnWillMediaLoad.argtypes = [_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p,POINTER(wkeMediaLoadInfo)),c_void_p]
 
 
     #void wkeOnStartDragging(wkeWebView webView, wkeStartDraggingCallback callback, void* param)
+    #wkeStartDraggingCallback CFUNCTYPE(None,_LRESULT,c_void_p,c_void_p,POINTER(wkeWebDragData),c_uint,c_void_p,POINTER(wkePoint)) 
+    #/*typedef void(WKE_CALL_TYPE*wkeStartDraggingCallback)(wkeWebView webView,void* param, wkeWebFrameHandle frame,const wkeWebDragData* data,wkeWebDragOperationsMask mask, const void* image, const wkePoint* dragImageOffset);*/
     mb.wkeOnStartDragging.argtypes = [_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,c_void_p,POINTER(wkeWebDragData),c_uint,c_void_p,POINTER(wkePoint)),c_void_p]
 
 
     #void wkeOnPrint(wkeWebView webView, wkeOnPrintCallback callback, void* param)
+    #wkeOnPrintCallback CFUNCTYPE(None,_LRESULT,c_void_p,c_void_p,c_void_p) 
+    #/*typedef void(WKE_CALL_TYPE*wkeOnPrintCallback)(wkeWebView webView, void* param, wkeWebFrameHandle frameId, void* printParams);*/
     mb.wkeOnPrint.argtypes = [_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,c_void_p,c_void_p),c_void_p]
 
 
     #void wkeScreenshot(wkeWebView webView, const wkeScreenshotSettings* settings, wkeOnScreenshot callback, void* param)
+    #wkeOnScreenshot CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p,c_size_t) 
+    #/*typedef void(WKE_CALL_TYPE*wkeOnScreenshot)(wkeWebView webView, void* param, const char* data, size_t size);typedef void(WKE_CALL_TYPE*wkeUiThreadRunCallback)(HWND hWnd, void* param);*/
     mb.wkeScreenshot.argtypes = [_LRESULT,POINTER(wkeScreenshotSettings),CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p,c_size_t),c_void_p]
 
 
     #void wkeOnOtherLoad(wkeWebView webView, wkeOnOtherLoadCallback callback, void* param)
+    #wkeOnOtherLoadCallback CFUNCTYPE(None,_LRESULT,c_void_p,c_int,POINTER(wkeTempCallbackInfo)) 
+    #/*typedef void(WKE_CALL_TYPE*wkeOnOtherLoadCallback)(wkeWebView webView, void* param, wkeOtherLoadType type, wkeTempCallbackInfo* info);*/
     mb.wkeOnOtherLoad.argtypes = [_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,c_int,POINTER(wkeTempCallbackInfo)),c_void_p]
 
 
     #void wkeOnContextMenuItemClick(wkeWebView webView, wkeOnContextMenuItemClickCallback callback, void* param)
+    #wkeOnContextMenuItemClickCallback CFUNCTYPE(c_bool,_LRESULT,c_void_p,c_int,c_int,c_void_p,c_void_p) 
+    #/*typedef bool(WKE_CALL_TYPE* wkeOnContextMenuItemClickCallback)(wkeWebView webView, void* param, wkeOnContextMenuItemClickType type, wkeOnContextMenuItemClickStep step, wkeWebFrameHandle frameId,void* info);*/
     mb.wkeOnContextMenuItemClick.argtypes = [_LRESULT,CFUNCTYPE(c_bool,_LRESULT,c_void_p,c_int,c_int,c_void_p,c_void_p),c_void_p]
 
 
@@ -974,6 +1077,8 @@ def MiniblinkInit(_path):
 
 
     #void wkeNetOnResponse(wkeWebView webView, wkeNetResponseCallback callback, void* param)
+    #wkeNetResponseCallback CFUNCTYPE(c_bool,_LRESULT,c_void_p,c_char_p,c_void_p) 
+    #/*typedef bool(WKE_CALL_TYPE*wkeNetResponseCallback)(wkeWebView webView, void* param, const utf8* url, wkeNetJob job);*/
     mb.wkeNetOnResponse.argtypes = [_LRESULT,CFUNCTYPE(c_bool,_LRESULT,c_void_p,c_char_p,c_void_p),c_void_p]
 
 
@@ -982,6 +1087,8 @@ def MiniblinkInit(_path):
     mb.wkeNetGetRequestMethod.restype = c_int
 
     #int wkeNetGetFavicon(wkeWebView webView, wkeOnNetGetFaviconCallback callback, void* param)
+    #wkeOnNetGetFaviconCallback CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p,POINTER(wkeMemBuf)) 
+    #/*typedef void(WKE_CALL_TYPE*wkeOnNetGetFaviconCallback)(wkeWebView webView, void* param, const utf8* url, wkeMemBuf* buf);*/
     mb.wkeNetGetFavicon.argtypes = [_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p,POINTER(wkeMemBuf)),c_void_p]
     mb.wkeNetGetFavicon.restype = c_int
 
@@ -1158,6 +1265,8 @@ def MiniblinkInit(_path):
 
 
     #void wkeUtilSetUiCallback(wkeUiThreadPostTaskCallback callback)
+    #wkeUiThreadPostTaskCallback CFUNCTYPE(c_int,_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p),c_void_p) 
+    #/*typedef int(WKE_CALL_TYPE*wkeUiThreadPostTaskCallback)(HWND hWnd, wkeUiThreadRunCallback callback, void* param);*/
     mb.wkeUtilSetUiCallback.argtypes = [CFUNCTYPE(c_int,_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p),c_void_p)]
 
 
@@ -1186,10 +1295,14 @@ def MiniblinkInit(_path):
 
 
     #void wkeNodeOnCreateProcess(wkeWebView webView, wkeNodeOnCreateProcessCallback callback, void* param)
+    #wkeNodeOnCreateProcessCallback CFUNCTYPE(None,_LRESULT,c_void_p,c_wchar_p,c_wchar_p,POINTER(STARTUPINFOW)) 
+    #/*typedef void(__stdcall *wkeNodeOnCreateProcessCallback)(wkeWebView webView, void* param, const WCHAR* applicationPath, const WCHAR* arguments, STARTUPINFOW* startup);*/
     mb.wkeNodeOnCreateProcess.argtypes = [_LRESULT,CFUNCTYPE(None,_LRESULT,c_void_p,c_wchar_p,c_wchar_p,POINTER(STARTUPINFOW)),c_void_p]
 
 
     #void wkeOnPluginFind(wkeWebView webView, const char* mime, wkeOnPluginFindCallback callback, void* param)
+    #wkeOnPluginFindCallback CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p,c_void_p,c_void_p,c_void_p) 
+    #/*typedef void(WKE_CALL_TYPE*wkeOnPluginFindCallback)(wkeWebView webView, void* param, const utf8* mime, void* initializeFunc, void* getEntryPointsFunc, void* shutdownFunc);*/
     mb.wkeOnPluginFind.argtypes = [_LRESULT,c_char_p,CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p,c_void_p,c_void_p,c_void_p),c_void_p]
 
 
@@ -1218,6 +1331,10 @@ def MiniblinkInit(_path):
     mb.wkeRegisterEmbedderCustomElement.restype = c_bool
 
     #void wkeSetMediaPlayerFactory(wkeWebView webView, wkeMediaPlayerFactory factory, wkeOnIsMediaPlayerSupportsMIMEType callback)
+    #wkeMediaPlayerFactory CFUNCTYPE(c_void_p,_LRESULT,c_void_p,c_void_p,c_void_p) 
+    #/*typedef wkeMediaPlayer(WKE_CALL_TYPE* wkeMediaPlayerFactory)(wkeWebView webView, wkeMediaPlayerClient client, void* npBrowserFuncs, void* npPluginFuncs); wkeMediaPlayerClient client unknow */
+    #wkeOnIsMediaPlayerSupportsMIMEType CFUNCTYPE(c_bool,c_char_p) 
+    #/*typedef bool(WKE_CALL_TYPE* wkeOnIsMediaPlayerSupportsMIMEType)(const utf8* mime);*/
     mb.wkeSetMediaPlayerFactory.argtypes = [_LRESULT,CFUNCTYPE(c_void_p,_LRESULT,c_void_p,c_void_p,c_void_p),CFUNCTYPE(c_bool,c_char_p)]
 
 
@@ -1254,26 +1371,38 @@ def MiniblinkInit(_path):
 
 
     #void jsBindFunction(const char* name, jsNativeFunction fn, unsigned int argCount)
+    #jsNativeFunction CFUNCTYPE(c_longlong,c_void_p) 
+    #/*typedef jsValue(JS_CALL* jsNativeFunction) (jsExecState es);*/
     mb.jsBindFunction.argtypes = [c_char_p,CFUNCTYPE(c_longlong,c_void_p),c_uint]
 
 
     #void jsBindGetter(const char* name, jsNativeFunction fn)
+    #jsNativeFunction CFUNCTYPE(c_longlong,c_void_p) 
+    #/*typedef jsValue(JS_CALL* jsNativeFunction) (jsExecState es);*/
     mb.jsBindGetter.argtypes = [c_char_p,CFUNCTYPE(c_longlong,c_void_p)]
 
 
     #void jsBindSetter(const char* name, jsNativeFunction fn)
+    #jsNativeFunction CFUNCTYPE(c_longlong,c_void_p) 
+    #/*typedef jsValue(JS_CALL* jsNativeFunction) (jsExecState es);*/
     mb.jsBindSetter.argtypes = [c_char_p,CFUNCTYPE(c_longlong,c_void_p)]
 
 
     #void wkeJsBindFunction(const char* name, wkeJsNativeFunction fn, void* param, unsigned int argCount)
+    #wkeJsNativeFunction CFUNCTYPE(c_longlong,c_void_p,c_void_p) 
+    #/*typedef jsValue(WKE_CALL_TYPE* wkeJsNativeFunction) (jsExecState es, void* param);*/
     mb.wkeJsBindFunction.argtypes = [c_char_p,CFUNCTYPE(c_longlong,c_void_p,c_void_p),c_void_p,c_uint]
 
 
     #void wkeJsBindGetter(const char* name, wkeJsNativeFunction fn, void* param)
+    #wkeJsNativeFunction CFUNCTYPE(c_longlong,c_void_p,c_void_p) 
+    #/*typedef jsValue(WKE_CALL_TYPE* wkeJsNativeFunction) (jsExecState es, void* param);*/
     mb.wkeJsBindGetter.argtypes = [c_char_p,CFUNCTYPE(c_longlong,c_void_p,c_void_p),c_void_p]
 
 
     #void wkeJsBindSetter(const char* name, wkeJsNativeFunction fn, void* param)
+    #wkeJsNativeFunction CFUNCTYPE(c_longlong,c_void_p,c_void_p) 
+    #/*typedef jsValue(WKE_CALL_TYPE* wkeJsNativeFunction) (jsExecState es, void* param);*/
     mb.wkeJsBindSetter.argtypes = [c_char_p,CFUNCTYPE(c_longlong,c_void_p,c_void_p),c_void_p]
 
 
@@ -1536,6 +1665,7 @@ def MiniblinkInit(_path):
     #const utf8* jsGetCallstack(jsExecState es)
     mb.jsGetCallstack.argtypes = [c_void_p]
     mb.jsGetCallstack.restype = c_char_p
+
 
 
     return mb

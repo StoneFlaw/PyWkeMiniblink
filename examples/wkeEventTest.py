@@ -68,13 +68,14 @@ def main():
         win32gui.PostQuitMessage(0)
         return True
 
-
+    
+    
     webview.onURLChanged2(OnEvent,'URL Changed')
     webview.onDocumentReady2(OnEvent,'Document is Ready')
     webview.onMouseOverUrlChanged(OnEvent,'Mouse over URL')
-    webview.onWindowClosing(OnCloseEvent,'Closing Window')
+
     webview.onAlertBox(OnEvent,'AlertBox')
-    webview.onConfirmBox(OnEvent,'ConfirmBox')
+    webview.onConfirmBox(OnEvent,'Confirm Event')
     webview.onPromptBox(OnEvent,'PromptBox')
     webview.onConsole(OnEvent,'Console')
     webview.onDownload(OnEvent,'Download')
@@ -82,7 +83,7 @@ def main():
     #webview.onNetResponse(OnEvent,'NetResponse')
     webview.onLoadUrlEnd(OnEvent,'LoadUrlEnd')
 
-
+    webview.onWindowClosing(OnCloseEvent,'Closing Window')
 
     webview.loadURL('https://www.w3school.com.cn/jsref/index.asp')
     webview.showWindow(True)
