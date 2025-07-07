@@ -29,8 +29,8 @@ from wkeMiniblink.wkeWin32 import *
 from wkeMiniblink.wkeWin32ProcMsg import wkeMsgProcResize,wkeMsgProcQuit
 
 user32=windll.user32
-cookiePath = f'{father_folder }/build/cookie.dat'
-localStagePath=f'{father_folder }/build/LocalStage'
+cookiePath = f'{father_folder }\\build\\cookie.dat'
+localStagePath=f'{father_folder }\\build\\LocalStage'
 
 
 class Test( unittest . TestCase ):
@@ -44,15 +44,22 @@ class Test( unittest . TestCase ):
             os.remove(cookiePath)
         if os.path.exists(localStagePath):
             shutil.rmtree(localStagePath)
-        Wke.setCookieAndStagePath(cookie=cookiePath,localStage=localStagePath)
-
         self.assertEqual(os.path.isfile(cookiePath),False)
         self.assertEqual(os.path.isdir(localStagePath),False)
+        Wke.init()
+       
+        print("Miniblink Version :",Wke.version,"\n Version:",Wke.Version(),"\n DLL:",Wke.dllPath)
+
+
     
         webview = WebWindow()
-        webview.create(0,0,0,800,600)
-        webview.loadFile(f'{father_folder}/res/testdata/testjs.html')
+        webview.create(0,0,0,400,300)
+        #webview.setCookieAndStagePath(cookie=cookiePath,localStage=localStagePath)
+        webview.setCookieAndStagePath(cookie=f'{father_folder }/build/cookie.dat',localStage=f'{father_folder }/build/LocalStage')
 
+        #需要网页确实触发Cookie和Stage动作
+        webview.loadFile(f'{father_folder}/res/testdata/countdown.html')
+        webview.moveToCenter()
         webview.showWindow(True)
 
         t0 = time.time()
@@ -79,7 +86,6 @@ class Test( unittest . TestCase ):
 
     
 if __name__=='__main__':
-    Wke.init()
 
     suit = unittest.TestSuite()
     suit.addTests( [Test("test_webview")])

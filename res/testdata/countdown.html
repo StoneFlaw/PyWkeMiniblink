@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>倒计时三十秒</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        #timer {
+            font-size: 4em;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+	<div id="baidu">
+	<iframe id='testiframe' src="https://www.baidu.com" allow="fullscreen 'none'" frameborder="0" style="width:100%;height: 240px;margin:0px;"></iframe>
+    </div>
+	<div id="timer">30</div>
+
+    <script>
+        let timeLeft = 30;
+        const timerElement = document.getElementById('timer');
+
+        const countdownInterval = setInterval(() => {
+            if (timeLeft <= 0) {
+                clearInterval(countdownInterval);
+                timerElement.textContent = "时间到！";
+            } else {
+                timerElement.textContent = timeLeft;
+                timeLeft--;
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

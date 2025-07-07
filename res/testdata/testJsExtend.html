@@ -2,52 +2,18 @@
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>MBPython-测试js</title>
+        <title>MBPython-测试js绑定py函数</title>
         <link rel="stylesheet" type="text/css" href="css/iview.css">
         <script type="text/javascript" src="javascript/vue.js"></script>
         <script type="text/javascript" src="javascript/iview.js"></script>
         <script type="text/javascript" src="javascript/test.js"></script>
     </head>
+	
     <body style="background: none">
+        <div class="test-jsExtend"> 
+            <button onclick="jsCallpy('jsCallpy', 666)" style='margin-middle: 20px;cursor: pointer;'>jsCallpy</button>
+            <button onclick="extendJS('confirm', 777,'我来自 JS',false,[1,2,3,'ok',true],JSON.stringify({'a':'a','b':888.8}))" style='margin-middle: 20px;cursor: pointer;'>extendJS</button>
 
-        <div class="test-vue"> 
-
-            <div id="app">
-                <i-button @click="show()" style='margin-right: 20px'>{{message}}</i-button>
-                <i-button @click="getResult()" style='margin-right: 20px'>{{result}}</i-button>
-                <Modal :visible.sync="visible" title="iview弹窗">vue测试</Modal>
-            </div>
-            <script>
-                new Vue({
-                    el: '#app',
-                    data:{
-                        visible: false,
-                        message:'app-测试vue点击',
-                        result:'测试外部引入js'
-                    },
-                    methods: {
-                        show() {
-                            this.visible = true;
-                        },
-                        getResult(){
-                            this.result=testImportJs()
-                        }
-                    }
-                })
-                new Vue({
-                    el: '#app2',
-                    data: {
-                        message: 'app2-测试vue点击'
-                    }
-                })
-            </script>
-            <button onclick="creatVueApp()" style='margin-right: 20px;cursor:pointer'>点击手动创建vue实例</button>
-            <div id='app3'>
-                <div @click="testApp3Click" style="color:red;margin-right: 20px;background-color: white;height: 30px;line-height: 30px;border-radius:4px;cursor: pointer;">{{msg}}</div>
-            </div>
-            <div id='app4'>
-                <div style="color:blue;background-color: white;height: 30px;line-height: 30px;border-radius:4px;cursor: pointer;" @click="testApp4Click()">{{msg}}</div>
-            </div>
         </div>
                
     </body>
@@ -67,6 +33,7 @@ button {
 }
 html,body{  
     height: 100%;
+	justify-content: center;
 } 
 #app{
     display: flex;

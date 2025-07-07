@@ -28,7 +28,22 @@ user32=windll.user32
 
 
 
+def jsCallpy(**kwargs):
+    global j_webview
 
+    es=kwargs['es']
+    webview =kwargs['param']
+    hwnd = webview.hwnd
+    arg_count=Wke.jsArgCount(es)
+    val_ls=Wke.getJsArgs(es,arg_count)
+
+    #print("args:",val_ls)
+
+    wkeMessageBox(f"func:jsCallpy\n args:{pformat(val_ls)}","Python",hwnd)
+
+    webview.runJsCode('alert("Send to Javascript : alert('+str(val_ls)+')")')        
+
+    return 0
 
 def jsWindowExtend(**kwargs):
     es=kwargs['es']
@@ -57,7 +72,7 @@ def jsWindowExtend(**kwargs):
 def main():
     Wke.init()
     Wke.setCookieAndStagePath(cookie=f'{father_folder }/build/cookie.dat',localStage=f'{father_folder }/build/LocalStage')
-    print("Miniblink Version :",Wke.version,"\n Version:",Wke.Version())
+    print("Miniblink Version :",Wke.version,"\n Version:",Wke.Version(),"\n DLL:",Wke.dllPath)
 
     x,y,w,h = 0,0,640,480
 
@@ -70,10 +85,10 @@ def main():
     #'https://www.w3school.com.cn/jsref/index.asp'
 
     #webview.loadURL('https://www.w3school.com.cn/jsref/index.asp')
-    webview.loadFile(f'{father_folder}/res/testdata/testjs.html')
-
+    webview.loadFile(f'{father_folder}/res/testdata/testComplex.html')
+    
     Wke.extend(jsWindowExtend,'jsWindowExtend', param=webview)
-
+    Wke.extend(jsCallpy,'jsCallpy', param=webview)
     win32gui.ShowWindow(hwnd,SW_SHOWNORMAL)
     win32gui.PumpMessages()
     return

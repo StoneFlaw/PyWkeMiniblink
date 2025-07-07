@@ -22,8 +22,9 @@ from ctypes import (c_void_p,
 
 from . import _LRESULT,WkeCallbackError,GetMiniblinkDLL
 
+from . import *
 from .wkeStruct import *
-from .miniblink import MiniblinkInit,wkeGetString,wkeSetString,wkeCreateString
+from .miniblink import *
 
 class WkeEvent():
     """Wke关于webview的事件管理
@@ -56,11 +57,7 @@ class WkeEvent():
         """WkeEvent构造函数
 
         """
-        if dll is None:
-            self.dll = GetMiniblinkDLL()
-        else:
-            self.dll = dll
-            
+    
         self.context ={}
         self.eventEntries = {}
         #创建所有onXXX对应的注销函数ofXXX
@@ -166,7 +163,7 @@ class WkeEvent():
     
         """
         eventid = self._on(pwebview,'onDocumentReady2',func,param)
-        return   self.dll.wkeOnDocumentReady2(pwebview.cId,self._wkeDocumentReady2Callback,eventid)
+        return   wkeOnDocumentReady2(pwebview.cId,self._wkeDocumentReady2Callback,eventid)
 
     @WkeMethod(CFUNCTYPE(None,_LRESULT,c_void_p,c_void_p))
     def _wkeDocumentReady2Callback(self,cwebview,param,frameId):
@@ -194,11 +191,11 @@ class WkeEvent():
         """   
 
         eventid = self._on(pwebview,func,param)
-        return   self.dll.wkeOnCreateView(pwebview.cId,self._wkeCreateViewCallback,eventid)
+        return   wkeOnCreateView(pwebview.cId,self._wkeCreateViewCallback,eventid)
 
     @WkeMethod(CFUNCTYPE(_LRESULT,_LRESULT,c_void_p,c_int,c_char_p,POINTER(wkeWindowFeatures)))
     def _wkeCreateViewCallback(self,cwebview,param,navigationType,url,windowFeatures):
-        url=wkeGetString(url)
+        url=pyWkeGetString(url)
         return self._callback(cwebview,param,navigationType=navigationType,url=url,windowFeatures=windowFeatures)
 
     
@@ -219,11 +216,11 @@ class WkeEvent():
         
         """   
         eventid = self._on(pwebview,'onURLChanged2',func,param)
-        return self.dll.wkeOnURLChanged2(pwebview.cId,self._wkeURLChangedCallback2,eventid)
+        return wkeOnURLChanged2(pwebview.cId,self._wkeURLChangedCallback2,eventid)
 
     @WkeMethod(CFUNCTYPE(None,_LRESULT,c_void_p,c_void_p,c_char_p))
     def _wkeURLChangedCallback2(self,cwebview,param,frameId,url):
-        url=wkeGetString(url)
+        url=pyWkeGetString(url)
         return self._callback(cwebview,param,frameId=frameId,url=url)
 
     
@@ -245,7 +242,7 @@ class WkeEvent():
             param(any, optional):   回调上下文参数,默认为None
         """   
         eventid = self._on(pwebview,'onWindowClosing',func,param)
-        return self.dll.wkeOnWindowClosing(pwebview.cId,self._wkeWindowClosingCallback,eventid)
+        return wkeOnWindowClosing(pwebview.cId,self._wkeWindowClosingCallback,eventid)
 
     @WkeMethod(CFUNCTYPE(c_bool,_LRESULT,c_void_p))
     def _wkeWindowClosingCallback(self,cwebview, param):
@@ -268,7 +265,7 @@ class WkeEvent():
             param(any, optional):   回调上下文参数,默认为None
         """   
         eventid = self._on(pwebview,'onWindowDestroy',func,param)
-        return self.dll.wkeOnWindowDestroy(pwebview.cId,self._wkeWindowDestroyCallback,eventid)
+        return wkeOnWindowDestroy(pwebview.cId,self._wkeWindowDestroyCallback,eventid)
 
     @WkeMethod(CFUNCTYPE(None,_LRESULT,c_void_p) )
     def _wkeWindowDestroyCallback(self,cwebview, param):
@@ -293,7 +290,7 @@ class WkeEvent():
             param(any, optional):   回调上下文参数,默认为None
         """   
         eventid = self._on(pwebview,'onPaintUpdated',func,param)
-        return self.dll.wkeOnPaintUpdated(pwebview.cId,self._wkePaintUpdatedCallback ,eventid)
+        return wkeOnPaintUpdated(pwebview.cId,self._wkePaintUpdatedCallback ,eventid)
     
     @WkeMethod(CFUNCTYPE(None,_LRESULT,c_void_p,_LRESULT,c_int,c_int,c_int,c_int))
     def _wkePaintUpdatedCallback(self,cwebview,param,hdc,x,y,cx,cy):
@@ -321,7 +318,7 @@ class WkeEvent():
         """   
 
         eventid = self._on(pwebview,'onPaintBitUpdated',func,param)
-        return self.dll.wkeOnPaintBitUpdated(pwebview.cId, self._wkePaintBitUpdatedCallback,eventid)
+        return wkeOnPaintBitUpdated(pwebview.cId, self._wkePaintBitUpdatedCallback,eventid)
     
     @WkeMethod(CFUNCTYPE(None,_LRESULT,c_void_p,c_void_p,POINTER(wkeRect),c_int,c_int))
     def _wkePaintBitUpdatedCallback(self,cwebview,param,buf,rect,width,height):
@@ -358,11 +355,11 @@ class WkeEvent():
             ==================================      ==================================
         """   
         eventid = self._on(pwebview,'onNavigation',func,param)   
-        return self.dll.wkeOnNavigation(pwebview.cId,self._wkeNavigationCallback,eventid)
+        return wkeOnNavigation(pwebview.cId,self._wkeNavigationCallback,eventid)
     
     @WkeMethod(CFUNCTYPE(c_bool,_LRESULT,c_void_p,c_int,c_char_p))
     def _wkeNavigationCallback(self,cwebview,param,navigationType,url):
-        url=wkeGetString(url)
+        url=pyWkeGetString(url)
         return self._callback(cwebview,param=param,navigationType=navigationType,url=url)
     
     
@@ -383,11 +380,11 @@ class WkeEvent():
         """   
     
         eventid = self._on(pwebview,'onTitleChanged',func,param)       
-        return self.dll.wkeOnTitleChanged(pwebview.cId,self._wkeTitleChangedCallback,eventid)
+        return wkeOnTitleChanged(pwebview.cId,self._wkeTitleChangedCallback,eventid)
     
     @WkeMethod(CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p))
     def _wkeTitleChangedCallback(self,cwebview, param, title):
-        title=wkeGetString(title)
+        title=pyWkeGetString(title)
         return self._callback(cwebview, param=param, title=title)
         
 
@@ -409,11 +406,11 @@ class WkeEvent():
             param(any, optional):   回调上下文参数,默认为None
         """   
         eventid = self._on(pwebview,'onMouseOverUrlChanged',func,param)       
-        return self.dll.wkeOnMouseOverUrlChanged(pwebview.cId,self._wkeMouseOverUrlChangedCallback,eventid)
+        return wkeOnMouseOverUrlChanged(pwebview.cId,self._wkeMouseOverUrlChangedCallback,eventid)
     
     @WkeMethod(CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p))
     def _wkeMouseOverUrlChangedCallback(self,cwebview, param, url):
-        url=wkeGetString(url)
+        url=pyWkeGetString(url)
         return self._callback(cwebview, param=param, url=url)
         
 
@@ -433,11 +430,11 @@ class WkeEvent():
             param(any, optional):   回调上下文参数,默认为None
         """  
         eventid = self._on(pwebview,'onAlertBox',func,param)           
-        return self.dll.wkeOnAlertBox(pwebview.cId,self._wkeAlertBoxCallback,eventid)
+        return wkeOnAlertBox(pwebview.cId,self._wkeAlertBoxCallback,eventid)
        
     @WkeMethod(CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p))
     def _wkeAlertBoxCallback(self,cwebview,param,msg):
-        msg=wkeGetString(msg)
+        msg=pyWkeGetString(msg)
         return self._callback(cwebview, param=param, msg=msg)
         
         
@@ -462,11 +459,11 @@ class WkeEvent():
             param(any, optional):   回调上下文参数,默认为None
         """  
         eventid = self._on(pwebview,'onConfirmBox',func,param)           
-        return self.dll.wkeOnConfirmBox(pwebview.cId,self._wkeConfirmBoxCallback,eventid)
+        return wkeOnConfirmBox(pwebview.cId,self._wkeConfirmBoxCallback,eventid)
         
     @WkeMethod(CFUNCTYPE(c_bool,_LRESULT,c_void_p,c_char_p))
     def _wkeConfirmBoxCallback(self,cwebview,param,msg):
-        msg=wkeGetString(msg)
+        msg=pyWkeGetString(msg)
         return self._callback(cwebview, param=param, msg=msg)
 
 
@@ -495,16 +492,16 @@ class WkeEvent():
             param(any, optional):   回调上下文参数,默认为None
         """
         eventid = self._on(pwebview,'onPromptBox',func,param)       
-        return self.dll.wkeOnPromptBox(pwebview.cId,self._wkePromptBoxCallback,eventid)
+        return wkeOnPromptBox(pwebview.cId,self._wkePromptBoxCallback,eventid)
 
     @WkeMethod(CFUNCTYPE(c_bool,_LRESULT,c_void_p,c_char_p,c_char_p,c_void_p))
     def _wkePromptBoxCallback(self,cwebview,param,msg,defaultResult,wkeResult):
-        msg=wkeGetString(msg)
-        defaultResult=wkeGetString(defaultResult)
+        msg=pyWkeGetString(msg)
+        defaultResult=pyWkeGetString(defaultResult)
 
         result = self._callback(cwebview, param=param, msg=msg,defaultResult=defaultResult,result = "")
         if result :
-            wkeSetString(cast(wkeResult,c_char_p),result)
+            pyWkeSetString(cast(wkeResult,c_char_p),result)
             return True
 
         return False
@@ -525,13 +522,13 @@ class WkeEvent():
             param(any, optional):   回调上下文参数,默认为None
         """
         eventid = self._on(pwebview,'onConsole',func,param)       
-        return self.dll.wkeOnConsole(pwebview.cId,self._wkeConsoleCallback,eventid)
+        return wkeOnConsole(pwebview.cId,self._wkeConsoleCallback,eventid)
 
     @WkeMethod(CFUNCTYPE(None,_LRESULT,c_void_p,c_uint,c_char_p,c_char_p,c_int,c_char_p))
     def _wkeConsoleCallback(self,cwebview,param,level,msg,sourceName,sourceLine,stackTrace):
-        msg= wkeGetString(msg)
-        sourceName=wkeGetString(sourceName)
-        stackTrace=wkeGetString(stackTrace)
+        msg= pyWkeGetString(msg)
+        sourceName=pyWkeGetString(sourceName)
+        stackTrace=pyWkeGetString(stackTrace)
         return self._callback(cwebview, param=param,level=level,msg=msg,sourceName=sourceName,sourceLine=sourceLine,stackTrace=stackTrace)
     
 
@@ -554,11 +551,11 @@ class WkeEvent():
             param(any, optional):   回调上下文参数,默认为None
         """   
         eventid = self._on(pwebview,'onDownload',func,param)         
-        return self.dll.wkeOnDownload(pwebview.cId,self._wkeDownloadCallback,eventid)
+        return wkeOnDownload(pwebview.cId,self._wkeDownloadCallback,eventid)
         
     @WkeMethod(CFUNCTYPE(c_bool,_LRESULT,c_void_p,c_char_p))
     def _wkeDownloadCallback(self,cwebview,param,url):
-        url=wkeGetString(url)
+        url=pyWkeGetString(url)
         return self._callback(cwebview, param=param, url=url)
 
 
@@ -586,7 +583,7 @@ class WkeEvent():
             JOB 参数未C翻译到Py      
         """
         eventid = self._on(pwebview,'onNetResponse',func,param)   
-        return self.dll.wkeNetOnResponse(pwebview.cId,self._wkeNetResponseCallback,eventid)   
+        return wkeNetOnResponse(pwebview.cId,self._wkeNetResponseCallback,eventid)   
 
     @WkeMethod(CFUNCTYPE(c_bool,_LRESULT,c_void_p,c_char_p,c_void_p))
     def _wkeNetResponseCallback(self,cwebview,param,url,job):
@@ -620,7 +617,7 @@ class WkeEvent():
 
         """
         eventid = self._on(pwebview,'onLoadUrlBegin',func,param)   
-        return self.dll.wkeOnLoadUrlBegin(pwebview.cId,self._wkeLoadUrlBeginCallback,eventid)
+        return wkeOnLoadUrlBegin(pwebview.cId,self._wkeLoadUrlBeginCallback,eventid)
 
     @WkeMethod(CFUNCTYPE(c_bool,_LRESULT,c_void_p,c_char_p,c_void_p))
     def _wkeLoadUrlBeginCallback(self,cwebview,param,url,job):
@@ -649,7 +646,7 @@ class WkeEvent():
             job未翻译
         """
         eventid = self._on(pwebview,'onLoadUrllEnd',func,param)   
-        return self.dll.wkeOnLoadUrlEnd(pwebview.cId,self._wkeLoadUrlEndCallback,eventid)
+        return wkeOnLoadUrlEnd(pwebview.cId,self._wkeLoadUrlEndCallback,eventid)
 
     @WkeMethod(CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p,c_void_p,c_void_p,c_int))
     def _wkeLoadUrlEndCallback(self,cwebview,param,url,job,buf,len):
@@ -676,7 +673,7 @@ class WkeEvent():
             job未翻译
         """
         eventid = self._on(pwebview,'onLoadUrllFail',func,param)   
-        return self.dll.wkeOnLoadUrlFail(pwebview.cId,self._wkeLoadUrlFailCallback,eventid)
+        return wkeOnLoadUrlFail(pwebview.cId,self._wkeLoadUrlFailCallback,eventid)
 
     @WkeMethod(CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p,c_void_p))
     def _wkeLoadUrlFailCallback(self,cwebview,param,url,job):
@@ -699,13 +696,13 @@ class WkeEvent():
             param(any, optional):   回调上下文参数,默认为None    
         """
         eventid = self._on(pwebview,'onLoadUrlFinish',func,param)   
-        return self.dll.wkeOnLoadUrlFinish(pwebview.cId,self._wkeLoadUrlFinishCallback,eventid)
+        return wkeOnLoadUrlFinish(pwebview.cId,self._wkeLoadUrlFinishCallback,eventid)
 
     @WkeMethod(CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p,c_void_p,c_int))
     def _wkeLoadUrlFinishCallback(self,cwebview,param,url,result,failedReason):
-        url=wkeGetString(url)
+        url=pyWkeGetString(url)
         if result==1:
-            failedReason=wkeGetString(failedReason)            
+            failedReason=pyWkeGetString(failedReason)            
         return self._callback(cwebview, param=param,url=url,result=result,failedReason=failedReason)
     
 
@@ -734,11 +731,11 @@ class WkeEvent():
             param(any, optional):   回调上下文参数,默认为None    
         """
         eventid = self._on(pwebview,'onGetFavicon',func,param)   
-        return self.dll.wkeNetGetFavicon(pwebview.cId,self._wkeOnNetGetFaviconCallback,eventid) 
+        return wkeNetGetFavicon(pwebview.cId,self._wkeOnNetGetFaviconCallback,eventid) 
     
     @WkeMethod(CFUNCTYPE(None,_LRESULT,c_void_p,c_char_p,POINTER(wkeMemBuf)))
     def _wkeOnNetGetFaviconCallback(self,cwebview,param,url,buf): 
-        url=wkeGetString(url)
+        url=pyWkeGetString(url)
         return self._callback(cwebview, param=param,url=url,buf=buf)
 
   

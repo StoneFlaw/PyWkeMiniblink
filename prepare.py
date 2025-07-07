@@ -205,11 +205,11 @@ def translate():
                         
                     c.append(a[2])
 
-                print(f"mb.{func}.argtypes = [",end="")
+                print(f"{func} = mb.{func}\n{func}.argtypes = [",end="")
                 print(f"{",".join(c)}]")
 
                 if res[1]!="None":
-                    print(f"mb.{func}.restype = {res[1]}\n")
+                    print(f"{func}.restype = {res[1]}\n")
                 else:
                     print("\n")
 

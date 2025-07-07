@@ -5,18 +5,25 @@ import json
 from threading import  Lock,Event,Thread
 from struct import pack
 
+import ctypes
+
+
 from ctypes import (cast,c_char_p,py_object,sizeof,byref,string_at,create_string_buffer,POINTER)
 from ctypes import (c_uint32,c_int32,c_ulong)
 from ctypes import (
     c_void_p,
+    c_float,
     windll,
     byref,
     CFUNCTYPE
 )
+
+
 from ctypes.wintypes import (RGB,MSG,
     DWORD,
     HWND,
-    UINT
+    UINT,
+    LPLONG
 )
 
 
@@ -34,8 +41,80 @@ from .wkeStruct import *
 RelPath = lambda file : os.path.join(os.path.dirname(os.path.abspath(__file__)), file)
 PCOPYDATASTRUCT = POINTER(COPYDATASTRUCT)
 
-SetWindowLong = windll.user32.SetWindowLongA
-GetWindowLong = windll.user32.GetWindowLongA
+
+user32 = ctypes.WinDLL('user32', use_last_error=True)
+
+
+
+
+
+bit=architecture()[0]
+
+if bit == '64bit':
+    SetWindowLong = user32.SetWindowLongPtrA
+    GetWindowLong = user32.GetWindowLongPtrA
+    #user32.SetWindowLongA.argtypes=[HWND,c_int,py_object]
+    #user32.GetWindowLongA.argtypes=[HWND,c_int]
+else:
+    SetWindowLong = user32.SetWindowLongA
+    GetWindowLong = user32.GetWindowLongA
+    #user32.SetWindowLongA.argtypes=[HWND,c_int,py_object]
+    #user32.GetWindowLongA.argtypes=[HWND,c_int]
+
+SetWindowLong.argtypes = [HWND, c_int,py_object]
+GetWindowLong.argtypes = [HWND, c_int]
+SetWindowLong.restype = _LRESULT
+GetWindowLong.restype = _LRESULT
+
+
+def wkeSetWindowLongHook(hwnd,ex,index = WkeConst.GWL_USERDATA):
+    """在窗口的私有数据上挂靠一个python对象 
+
+    Args:   
+        hwnd(int):窗体句柄
+        ex(obj):  挂靠的python对象 
+        index(int,optional): 挂载位置，默认WkeConst.GWL_USERDATA
+    Return:
+    """
+    #创建 Python 对象的 C 指针,PyObject *
+    cPtrOfPyobj = py_object(ex)
+
+    result = SetWindowLong(hwnd, index,cPtrOfPyobj)
+    return result
+
+def wkeGetWindowLongHook(hwnd,index = WkeConst.GWL_USERDATA):
+    """在窗口的私有数据上获取一个python对象
+
+    Args:   
+        hwnd(int):窗体句柄
+        
+        index(int,optional): 挂载位置，默认WkeConst.GWL_USERDATA
+    Returns:
+        object:     挂靠的python对象 
+    """
+    ex = GetWindowLong(hwnd,index)
+    if ex == 0:
+        return None
+    #PyObject * -> Ctypes Object
+    cPtrOfPyobj = cast(ex,py_object)
+    obj = cPtrOfPyobj.value
+    return obj
+
+def wkeGetWindowLong(hwnd,index = WkeConst.GWL_USERDATA):
+    """在窗口的私有数据上获取数值
+
+
+    """
+    ex = GetWindowLong(hwnd,index)
+    return ex
+
+def wkeSetWindowLong(hwnd,index,ex):
+    """在窗口的私有数据上获取数值
+
+
+    """
+    result = SetWindowLong(hwnd, index,ex)
+    return result
 
 def wkeSetIcon(hwnd,filename):
     """为一个真实窗口绑定一个wkeWebWindow
@@ -57,6 +136,10 @@ def wkeSetIcon(hwnd,filename):
         48, 48, WkeConst.LR_LOADFROMFILE)
     win32api.SendMessage(hwnd, WkeConst.WM_SETICON,WkeConst.ICON_BIG, icon)
     return True
+
+def wkeMessageBox(msg,title="",parent=None):
+    ret = win32gui.MessageBox(parent, msg, title, win32con.MB_OK)
+    return ret
 
 def wkeCreateWindow(title="",x=0,y=0,w=640,h=480,className='Miniblink'):
     """创建窗口
@@ -100,36 +183,6 @@ def wkeCreateTransparentWindow(title="",x=0,y=0,w=640,h=480,className='Miniblink
     return hwnd
 
 
-def wkeSetWindowLongHook(hwnd,ex,index = WkeConst.GWL_USERDATA):
-    """在窗口的私有数据上挂靠一个python对象 
-
-    Args:   
-        hwnd(int):窗体句柄
-        ex(obj):  挂靠的python对象 
-        index(int,optional): 挂载位置，默认WkeConst.GWL_USERDATA
-    """
-    #创建 Python 对象的 C 指针,PyObject *
-    cPtrOfPyobj = py_object(ex)
-    SetWindowLong(hwnd,index,cPtrOfPyobj)
-    return
-
-def wkeGetWindowLongHook(hwnd,index = WkeConst.GWL_USERDATA):
-    """在窗口的私有数据上获取一个python对象
-
-    Args:   
-        hwnd(int):窗体句柄
-        
-        index(int,optional): 挂载位置，默认WkeConst.GWL_USERDATA
-    Returns:
-        object:     挂靠的python对象 
-    """
-    ex = GetWindowLong(hwnd,index)
-    #PyObject * -> Ctypes Object
-    cPtrOfPyobj = cast(ex,py_object)
-    if ex == 0:
-        return None
-    obj = cPtrOfPyobj.value
-    return obj
 
 
 def wkeReplaceHWndProc(hwnd,newHwndProc):
@@ -141,9 +194,15 @@ def wkeReplaceHWndProc(hwnd,newHwndProc):
     Returns:
         int: 旧窗体处理过程  
     """
-    oldHwndProc = win32gui.GetWindowLong(hwnd, WkeConst.GWL_WNDPROC)
+
+    oldHwndProc = win32api.GetWindowLong(hwnd, WkeConst.GWL_WNDPROC)
+    #win32gui.GetWindowLong的x64 返回值只有低32位0
     if newHwndProc:
-       win32gui.SetWindowLong(hwnd, WkeConst.GWL_WNDPROC, newHwndProc)
+        #user32.SetWindowLongW.argtypes=[HWND,c_int,py_object]
+        #user32.SetWindowLongW(hwnd,WkeConst.GWL_WNDPROC, newHwndProc)
+        
+        #only win32gui.SetWindowLong works
+        win32gui.SetWindowLong(hwnd, WkeConst.GWL_WNDPROC, newHwndProc)
     return oldHwndProc
 
 
@@ -655,6 +714,8 @@ class HwndMsgAdapter():
                 webview.loadURL("http://192.168.1.1")
                 ....
 
+        NOTE:
+            替换窗口消息流程后,消息循环工作前.如果使用其他API(webview.moveToCenter)触发了UI相关消息可能导致显示不正确
     """
     def __init__(self,hwnd=0,webview=None):
         self.webview=webview
@@ -686,6 +747,7 @@ class HwndMsgAdapter():
         Keyword Args:
             hwnd(int):  父窗口句柄
             webview(WebView):   父窗口对应的WebView/WebWindow网页对象
+
         """
         if hwnd is not None:
             self.hwnd = hwnd
@@ -693,7 +755,11 @@ class HwndMsgAdapter():
             self.webview = webview
 
         self.oldGWL_USERDATA = wkeGetWindowLongHook(hwnd)
-        wkeSetWindowLongHook(hwnd,self.webview)
+        if self.oldGWL_USERDATA  != self.webview:
+            wkeSetWindowLongHook(hwnd,self.webview)
+            newUSERDATA = wkeGetWindowLongHook(hwnd)
+            if newUSERDATA != self.webview:
+                raise RuntimeError("SetWindowLongHook Fail")
 
         self.attached = True
         self.oldHwndProc = wkeReplaceHWndProc(hwnd,self._onWndProcCallback)

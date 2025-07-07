@@ -32,7 +32,7 @@ user32=windll.user32
 def main():
     Wke.init()
     Wke.setCookieAndStagePath(cookie=f'{father_folder }/build/cookie.dat',localStage=f'{father_folder }/build/LocalStage')
-    print("Miniblink Version :",Wke.version,"\n Version:",Wke.Version())
+    print("Miniblink Version :",Wke.version,"\n Version:",Wke.Version(),"\n DLL:",Wke.dllPath)
     webview = WebWindow()
     x,y,w,h = 0,0,640,480
 
@@ -49,10 +49,11 @@ def main():
 
     #'https://www.w3school.com.cn/jsref/index.asp'
     #http://192.168.1.130/nav/
-    webview.loadURL('https://www.w3school.com.cn/jsref/index.asp')
- 
+    webview.loadURL(f'baidu.com')
+    
     webview.showWindow(True)
     win32gui.ShowWindow(hwnd,SW_SHOWNORMAL)
+    
     win32gui.PumpMessages()
     return
 

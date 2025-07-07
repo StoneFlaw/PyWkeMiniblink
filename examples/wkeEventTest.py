@@ -51,9 +51,10 @@ def get_hwnd(x=0,y=0,w=860,h=760):
 
 
 def main():
-
     Wke.init()
     Wke.setCookieAndStagePath(cookie=f'{father_folder }/build/cookie.dat',localStage=f'{father_folder }/build/LocalStage')
+    print("Miniblink Version :",Wke.version,"\n Version:",Wke.Version(),"\n DLL:",Wke.dllPath)
+
     webview = WebWindow()
     webview.create(0,0,0,800,600)
     def OnEvent(context,*args,**kwargs):

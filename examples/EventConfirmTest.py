@@ -19,8 +19,9 @@ from wkeMiniblink.wkeWin32 import *
 def main():
     Wke.init()
     Wke.setCookieAndStagePath(cookie=f'{father_folder }/build/cookie.dat',localStage=f'{father_folder }/build/LocalStage')
+    print("Miniblink Version :",Wke.version,"\n Version:",Wke.Version(),"\n DLL:",Wke.dllPath)
     webview = WebWindow()
-    webview.create(0,0,0,800,600)
+    webview.create(0,0,0,400,300)
 
     def OnConfirmEvent(context,*args,**kwargs):
         param = context["param"]
@@ -54,7 +55,7 @@ def main():
 
     #webview.loadURL("https://www.w3school.com.cn/tiy/t.asp?f=jsck_confirm_3")   
     webview.loadFile(f'{father_folder}/res/testdata/confirm.html')
-    
+    webview.moveToCenter() 
     webview.showWindow(True)
     #wkePumpMessages()
     Wke.runMessageLoop()

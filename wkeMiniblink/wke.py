@@ -4,9 +4,10 @@ import binascii
 from inspect import getmembers
 
 
-from . import _LRESULT,WkeCallbackError,MINIBLINK_DLL_PATH,SetMiniblinkDLL,GetMiniblinkDLL
-from .miniblink import MiniblinkInit
+from . import *
+from .miniblink import *
 from .wkeStruct import *
+from .wkeStruct import _LRESULT
 from .wkeEvent import WkeEvent
 
 from ctypes import (c_void_p,
@@ -21,7 +22,7 @@ from ctypes import (c_void_p,
 )
 
 
-@CFUNCTYPE(None,_LRESULT,_LRESULT)
+@CFUNCTYPE(c_longlong,c_void_p,c_void_p)
 def _WkeJsBindCallback(execState,c_id):
     """
     jsBind的C-Python 回调函数,调用实际注册在Wke上下文中的Py函数
@@ -37,13 +38,15 @@ class Wke():
     Examples:
         .. code:: python
         
-            Wke.init("miniblink_4975_x32.dll")
+            Wke.init()
             ....
             Wke.runMessageLoop()
 
     """   
     #动态库
     dll = None
+
+    dllPath = ""
     #js管理
     js = None
     #事件管理
@@ -57,28 +60,17 @@ class Wke():
     _cookiePath =  None
     @staticmethod
     def Version():
-        return Wke.dll.wkeVersionString()
+        return wkeVersionString()
 
     @staticmethod
-    def init(path=MINIBLINK_DLL_PATH,**kwargs):
-        """加载动态库
-
-        初始化整个mb。此句必须在所有mb api前最先调用。并且所有mb api必须和调用wkeInit的线程为同个线程
-
-        Args:
-            path(str):   动态库的文件位置
-
+    def init(**kwargs):
         """
         
-        Wke.dll = MiniblinkInit(path)
-        SetMiniblinkDLL(Wke.dll)
+        """
+        Wke.dll = MINIBLINK_DLL_HANDLE
+        Wke.dllPath = MINIBLINK_DLL_PATH
         Wke.event = WkeEvent()
-
-        Wke.version = Wke.dll.wkeVersion()
-        #复制动态库中所有wke开头的功能函数
-        for name,func in getmembers(Wke.dll):
-            if name.startswith(("wke")):
-                setattr(Wke,name,func)
+        Wke.version = wkeVersion()
         return
     
     @staticmethod
@@ -112,14 +104,22 @@ class Wke():
             localStagePath(str): LocalStage的存储目录路径
 
         """
-        if "cookie" in kwargs:
-            Wke._cookiePath = os.path.realpath(kwargs["cookie"])
-        if "localStage" in kwargs:
-            Wke._localStagePath = os.path.realpath(kwargs["localStage"])
+        if "cookie" in kwargs :
+            if os.path.exists(kwargs["cookie"]):
+                Wke._cookiePath = os.path.realpath(kwargs["cookie"])
+            else:
+                Wke._cookiePath = kwargs["cookie"]
+
+        if "localStage" in kwargs :
+            if os.path.exists(kwargs["localStage"]):
+                Wke._localStagePath = os.path.realpath(kwargs["localStage"])
+            else:
+                Wke._localStagePath = kwargs["localStage"]
+
         return 
 
     @staticmethod  
-    def _jsBindFunction(jsFuncName,pyCallback, param=0,arg_count=0):
+    def _jsBindFunction(jsFuncName,pyCallback, param=None,arg_count=0):
         """设置一个python回调函数作为指定名称的js函数使用
 
         Args:
@@ -128,7 +128,7 @@ class Wke():
             param(any, optional):             回调上下文
             arg_count(int, optional):         参数个数
         """
-        return Wke.dll.wkeJsBindFunction(jsFuncName,pyCallback,arg_count,param)   
+        return wkeJsBindFunction(jsFuncName,pyCallback,param,arg_count)   
     
     @staticmethod    
     def runMessageLoop():
@@ -136,7 +136,7 @@ class Wke():
 
         也可以用win32gui.PumpMessages()
         """
-        Wke.dll.wkeRunMessageLoop(0)
+        wkeRunMessageLoop(0)
 
 
     
@@ -144,7 +144,7 @@ class Wke():
     def jsGC():
         """JS触发垃圾回收
         """
-        Wke.dll.jsGC()
+        jsGC()
 
 
 
@@ -194,7 +194,7 @@ class Wke():
         funcid = id(func)
         Wke._jsBinderContext[funcid]={"param":param,"name":name,"rawname":rawname,"func":func,"argcount":arg_count}
         
-        return Wke._jsBindFunction(rawname,_WkeJsBindCallback,arg_count,_LRESULT(funcid)) 
+        return Wke._jsBindFunction(rawname,_WkeJsBindCallback,cast(funcid,c_void_p),arg_count) 
 
     @staticmethod  
     def jsArgCount(arg):
@@ -206,7 +206,7 @@ class Wke():
             int: JS对象中变量的个数
         """
                 
-        return Wke.dll.jsArgCount(arg)
+        return jsArgCount(arg)
 
     @staticmethod  
     def getJsArgs(es,arg_count):
@@ -221,17 +221,17 @@ class Wke():
         """
         val_ls=[None]*arg_count
         for i in range(arg_count):
-            arg_type=Wke.dll.jsArgType(es,i)
+            arg_type=jsArgType(es,i)
             
             if arg_type==0:
-                val=Wke.dll.jsArg(es,i)
-                val=Wke.dll.jsToInt(es, c_longlong(val))
+                val=jsArg(es,i)
+                val=jsToInt(es, c_longlong(val))
             elif arg_type==1:
-                val=Wke.dll.jsArg(es,i)
-                val=Wke.dll.jsToTempStringW(es, c_longlong(val))            
+                val=jsArg(es,i)
+                val=jsToTempStringW(es, c_longlong(val))            
             elif arg_type==2:
-                val=Wke.dll.jsArg(es,i)
-                val=Wke.dll.jsToTempStringW(es, c_longlong(val))
+                val=jsArg(es,i)
+                val=jsToTempStringW(es, c_longlong(val))
                 if val=='false':
                     val=False
                 else:
@@ -240,18 +240,18 @@ class Wke():
             elif arg_type==5 or arg_type==7:
                 val=None
             elif arg_type==6:
-                val=Wke.dll.jsArg(es,i)
-                lens=Wke.dll.jsGetLength(es,c_longlong(val))
+                val=jsArg(es,i)
+                lens=jsGetLength(es,c_longlong(val))
                 tmp_arr=[None]*lens
                 for j in range(lens):
-                    tmp_val=Wke.dll.jsGetAt(es,c_longlong(val),j)            
-                    if Wke.dll.jsIsNumber(tmp_val)==1:
-                        tmp_val=Wke.dll.jsToInt(es, c_longlong(tmp_val))
-                    elif Wke.dll.jsIsString(tmp_val)==1:
-                        tmp_val=Wke.dll.jsToTempStringW(es, c_longlong(tmp_val))
+                    tmp_val=jsGetAt(es,c_longlong(val),j)            
+                    if jsIsNumber(tmp_val)==1:
+                        tmp_val=jsToInt(es, c_longlong(tmp_val))
+                    elif jsIsString(tmp_val)==1:
+                        tmp_val=jsToTempStringW(es, c_longlong(tmp_val))
                         tmp_val=c_wchar_p(tmp_val).value
-                    elif Wke.dll.jsIsBoolean(tmp_val)==1:
-                        tmp_val=Wke.dll.jsToTempStringW(es, c_longlong(tmp_val))
+                    elif jsIsBoolean(tmp_val)==1:
+                        tmp_val=jsToTempStringW(es, c_longlong(tmp_val))
                         if tmp_val=='false':
                             tmp_val=False
                         else:
@@ -259,8 +259,8 @@ class Wke():
                     tmp_arr[j]=tmp_val
                 val=tmp_arr
             else:
-                val=Wke.dll.jsArg(es,i)
-                val=Wke.dll.jsToTempStringW(es, c_longlong(val))
+                val=jsArg(es,i)
+                val=jsToTempStringW(es, c_longlong(val))
             val_ls[i]=val
         
         return val_ls
@@ -274,36 +274,36 @@ class Wke():
             val(any):       python对象
         """
         if isinstance(val,str):
-            val=Wke.dll.jsStringW(es,val)
+            val=jsStringW(es,val)
         elif isinstance(val,int):
-            val=Wke.dll.jsInt(val)
+            val=jsInt(val)
         elif isinstance(val,float):
-            val=Wke.dll.jsFloat(val)
+            val=jsFloat(val)
         elif isinstance(val,bool):
-            val=Wke.dll.jsBoolean(val)
+            val=jsBoolean(val)
 
         elif isinstance(val,list):
             lens=len(val)
-            tmp_arr=Wke.dll.jsEmptyArray(es)
+            tmp_arr=jsEmptyArray(es)
             for i in range(lens):
                 if isinstance(val[i],int):
-                    tmp_val=Wke.dll.jsInt(val[i])
+                    tmp_val=jsInt(val[i])
                 elif isinstance(val[i],str):
-                    tmp_val=Wke.dll.jsStringW(es,val[i])
+                    tmp_val=jsStringW(es,val[i])
                 elif isinstance(val[i],float):
-                    tmp_val=Wke.dll.jsFloat(c_float(val[i]))
-                Wke.dll.jsSetAt(es, c_longlong(tmp_arr), i, c_longlong(tmp_val))
+                    tmp_val=jsFloat(c_float(val[i]))
+                jsSetAt(es, c_longlong(tmp_arr), i, c_longlong(tmp_val))
             val=tmp_arr
         elif isinstance(val,dict): 
-            tmp_obj=Wke.dll.jsEmptyObject(es)
+            tmp_obj=jsEmptyObject(es)
             for k,v in val.items():
                 if isinstance(v,int):
-                    v=Wke.dll.jsInt(v)
+                    v=jsInt(v)
                 elif isinstance(v,str):
-                    v=Wke.dll.jsStringW(es,v)
+                    v=jsStringW(es,v)
                 elif isinstance(v,float):
-                    v=Wke.dll.jsFloat(c_float(v))
-                Wke.dll.jsSet(es,c_longlong(tmp_obj),k.encode(),c_longlong(v))
+                    v=jsFloat(c_float(v))
+                jsSet(es,c_longlong(tmp_obj),k.encode(),c_longlong(v))
             val=tmp_obj
         return val
     
@@ -353,7 +353,7 @@ class Wke():
        
         proxy= Wke.buildProxy(ip,port,proxy_type,user,password)
         if proxy is not None:
-            Wke.dll.wkeSetProxy(proxy)
+            wkeSetProxy(proxy)
         return proxy
 
 
@@ -404,11 +404,18 @@ class WebView():
             localStagePath(str): LocalStage的存储目录路径
         """
 
-        if "cookie" in kwargs and os.path.exists(kwargs["cookie"]):
-            self._cookiePath = os.path.realpath(kwargs["cookie"])
-        if "localStage" in kwargs and os.path.exists(kwargs["localStage"]):
-            self._localStagePath = os.path.realpath(kwargs["localStage"])
-        
+        if "cookie" in kwargs :
+            if os.path.exists(kwargs["cookie"]):
+                self._cookiePath = os.path.realpath(kwargs["cookie"])
+            else:
+                self._cookiePath = kwargs["cookie"]
+
+        if "localStage" in kwargs :
+            if os.path.exists(kwargs["localStage"]):
+                self._localStagePath = os.path.realpath(kwargs["localStage"])
+            else:
+                self._localStagePath = kwargs["localStage"]
+
         if self._cookiePath is None:
             self._cookiePath = Wke._cookiePath
 
@@ -443,7 +450,7 @@ class WebView():
         Returns:
             int: 视图页面宽度
         """
-        self.w = self.dll.wkeWidth(self.cId)
+        self.w = wkeWidth(self.cId)
         return self.w
     
     @property   
@@ -453,7 +460,7 @@ class WebView():
         Returns:
             int:  视图页面高度
         """
-        self.h = self.dll.wkeHeight(self.cId)   
+        self.h = wkeHeight(self.cId)   
         return self.h
     
     @property   
@@ -463,7 +470,7 @@ class WebView():
         Returns:
             int: 视图页面内容宽度
         """ 
-        return self.dll.wkeContentsWidth(self.cId)
+        return wkeContentsWidth(self.cId)
 
     @property       
     def contentsHeight(self):
@@ -473,7 +480,7 @@ class WebView():
             int: 视图页面内容高度
         """ 
         
-        return self.dll.wkeContentsHeight(self.cId)
+        return wkeContentsHeight(self.cId)
      
     def create(self):
         """创建一个页面webview，但不创建真窗口
@@ -481,7 +488,7 @@ class WebView():
         Returns:
             int: 页面的C句柄
         """
-        self.cId = self.dll.wkeCreateWebView()
+        self.cId = wkeCreateWebView()
         return self.cId 
     
     def bind(self,hwnd,x=0,y=0,width=640,height=480):
@@ -500,7 +507,7 @@ class WebView():
             return 0
         
         #创建一个页面,获取句柄
-        self.cId = self.dll.wkeCreateWebView()
+        self.cId = wkeCreateWebView()
 
         #为页面设定窗体句柄
         self.setHandle(hwnd)
@@ -518,7 +525,7 @@ class WebView():
     def destroy(self):
         """销毁wkeWebView对应的所有数据结构，包括真实窗口等
         """
-        self.dll.wkeDestroyWebView(self.cId)
+        wkeDestroyWebView(self.cId)
         self.hwnd = 0
         self.x,self.y = -1,-1
         self.w,self.h = -1,-1   
@@ -533,7 +540,7 @@ class WebView():
         Args:
             name(:obj:`str`):         窗口名称   
         """
-        self.dll.wkeSetWebViewName(self.cId,name.encode())
+        wkeSetWebViewName(self.cId,name.encode())
         self.name = name
         return 
 
@@ -550,7 +557,7 @@ class WebView():
         """ 
         if width==0 or height==0:return False
         self.w ,self.h = width,height
-        self.dll.wkeResize(self.cId,width,height)
+        wkeResize(self.cId,width,height)
         return True
 
     def setWindowTitle(self,title:str):
@@ -559,15 +566,8 @@ class WebView():
         Args:
             title(str):            标题
         """ 
-        return self.dll.wkeSetWindowTitleW(self.cId,title)
+        return wkeSetWindowTitleW(self.cId,title)
 
-    def getWindowTitle(self):
-        """获取页面标题
-
-        Returns:
-            str:            标题
-        """ 
-        return self.dll.wkeGetWindowTitle(self.cId)
 
 
     def showWindow(self,show=True):
@@ -576,7 +576,7 @@ class WebView():
         Args:
             show(bool):            True显示,False隐藏
         """ 
-        self.dll.wkeShowWindow(self.cId,show)
+        wkeShowWindow(self.cId,show)
         return 
 
     def MoveWindow(self,x:int,y:int,w:int,h:int):
@@ -590,25 +590,25 @@ class WebView():
         """ 
         self.x,self.y = x,y
         self.w,self.h = w,h
-        self.dll.wkeMoveWindow(self.cId,x,w,w,h)
+        wkeMoveWindow(self.cId,x,w,w,h)
         return
 
     def moveToCenter(self):
         """移动页面到中央
         """ 
-        self.dll.wkeMoveToCenter(self.cId)
+        wkeMoveToCenter(self.cId)
         return 
 
     def setFocus(self):
         """设置webview是焦点态,如果webveiw关联了窗口，窗口也会有焦点
         """ 
-        self.dll.wkeSetFocus(self.cId)
+        wkeSetFocus(self.cId)
         return 
     
     def killFocus(self):
         """设置webview是焦点态,如果webveiw关联了窗口，窗口也会有焦点
         """ 
-        self.dll.wkeKillFocus(self.cId)
+        wkeKillFocus(self.cId)
         return 
 
 
@@ -618,7 +618,7 @@ class WebView():
         Args:
             drag(bool):            True可拖拽,False不可拖拽
         """ 
-        self.dll.wkeSetDragEnable(self.cId,drag)
+        wkeSetDragEnable(self.cId,drag)
         return 
        
     def setZoomFactor(self,factor):
@@ -628,7 +628,7 @@ class WebView():
             factor(float):      缩放倍率
         """
         self.factor =factor
-        self.dll.wkeSetZoomFactor(self.cId,factor)
+        wkeSetZoomFactor(self.cId,factor)
         return
     
     def getZoomFactor(self,factor):
@@ -637,7 +637,7 @@ class WebView():
         Returns:
             float:      缩放倍率
         """
-        self.factor = self.dll.wkeGetZoomFactor(self.cId)
+        self.factor = wkeGetZoomFactor(self.cId)
         return self.factor
     
     def setTransparent(self,transparent):
@@ -646,7 +646,7 @@ class WebView():
         Args:
             transparent(bool):            True透明,False不透明
         """ 
-        self.dll.wkeSetTransparent(self.cId,transparent)   
+        wkeSetTransparent(self.cId,transparent)   
         return
     
     def getCaretRect(self):
@@ -655,7 +655,7 @@ class WebView():
         Returns:
             int: 编辑框的游标的位置
         """
-        return self.dll.wkeGetCaretRect()
+        return wkeGetCaretRect(self.cId)
 
     def getMainFrameId(self):
         """查询主帧编号
@@ -663,7 +663,7 @@ class WebView():
         Returns:
             int: 主帧编号
         """
-        return self.dll.wkeWebFrameGetMainFrame(self.cId)
+        return wkeWebFrameGetMainFrame(self.cId)
 
     def getFrameUrl(self,frameId:int):
         """查询指定编号帧的链接
@@ -673,7 +673,7 @@ class WebView():
         Returns:
             str: 帧链接
         """
-        url = self.dll.wkeGetFrameUrl(self.cId)
+        url = wkeGetFrameUrl(self.cId)
         return url
 
     def isMainFrame(self,frameId):
@@ -684,7 +684,7 @@ class WebView():
         Returns:
             bool: 是主帧返回True,不是返回False
         """
-        return self.dll.wkeIsMainFrame(self.cId,frameId)
+        return wkeIsMainFrame(self.cId,frameId)
     
     def getTempCallbackInfo(self):
         """获取视图当前回调函数的临时信息
@@ -692,7 +692,7 @@ class WebView():
         Returns:
             WKETempCallbackInfo: 临时信息
         """
-        return self.dll.wkeGetTempCallbackInfo(self.cId)
+        return wkeGetTempCallbackInfo(self.cId)
 
     def setUserKeyValue(self,k,v):
         """为视图的c对象设置一个绑定的k:v对
@@ -701,10 +701,10 @@ class WebView():
             k(str):      绑定键
             v(any):      绑定对象
         """   
-        val = py_object(v)
+        #val = py_object(v)
         k = k.encode()
        
-        return self.dll.wkeSetUserKeyValue(self.cId,k,val)
+        return wkeSetUserKeyValue(self.cId,k,cast(id(v), c_void_p))
 
     def getUserKeyValue(self,k:str):
         """获取视图绑定的k键对应的对象
@@ -715,7 +715,7 @@ class WebView():
             object:        绑定对象
         """   
         k = k.encode()
-        cPtrOfPyobj = self.dll.wkeGetUserKeyValue(self.cId,k)
+        cPtrOfPyobj = wkeGetUserKeyValue(self.cId,k)
         cPyObj = cast(cPtrOfPyobj,py_object)
         return cPyObj.value
    
@@ -732,7 +732,7 @@ class WebView():
             x(int):            绘制偏移x
             y(int):            绘制偏移y
         """
-        self.dll.wkeSetHandleOffset(self.cId,x,y)
+        wkeSetHandleOffset(self.cId,x,y)
 
     def setHandle(self,hwnd):
         """设置wkeWebView对应的窗口句柄
@@ -741,7 +741,7 @@ class WebView():
         Args:
             hwnd(int):            窗口句柄
         """
-        self.dll.wkeSetHandle(self.cId,hwnd)
+        wkeSetHandle(self.cId,hwnd)
         self.hwnd = hwnd
         return
 
@@ -751,7 +751,7 @@ class WebView():
         Returns:
             int: 页面的窗口句柄
         """
-        return self.dll.wkeGetWindowHandle(self.cId)
+        return wkeGetWindowHandle(self.cId)
 
     def getViewDC(self): 
         """获取wkeWebView对应的设备上下文句柄
@@ -759,7 +759,7 @@ class WebView():
         Returns:
             DC: 页面的设备上下文句柄
         """
-        self.hdc = self.dll.wkeGetViewDC(self.cId)
+        self.hdc = wkeGetViewDC(self.cId)
         return self.hdc
 
     def unlockViewDC(self): 
@@ -767,7 +767,7 @@ class WebView():
 
 
         """
-        self.dll.wkeUnlockViewDC(self.cId)
+        wkeUnlockViewDC(self.cId)
         return 
     ##############Setting##############   
 
@@ -778,7 +778,7 @@ class WebView():
         Args:
             ua(str): 浏览器标识字符串
         """
-        self.dll.wkeSetUserAgentW(self.cId,ua)
+        wkeSetUserAgentW(self.cId,ua)
 
     def getUserAgent(self):
         """获取页面对应的浏览器标识字符串
@@ -786,7 +786,7 @@ class WebView():
         Returns:
             str: ua浏览器标识字符串
         """
-        ua=self.dll.wkeGetUserAgent(self.cId)
+        ua=wkeGetUserAgent(self.cId)
         return ua.decode()        
     
 
@@ -804,7 +804,7 @@ class WebView():
         """
         proxy= Wke.buildProxy(ip,port,proxy_type,user,password)
         if proxy is not None:
-            self.dll.wkeSetViewProxy(self.cId,proxy)
+            wkeSetViewProxy(self.cId,proxy)
         return proxy
     
     def setContextMenuEnabled(self,en:bool):
@@ -813,7 +813,7 @@ class WebView():
         Args:
             en(bool): True使能,False禁止
         """
-        self.dll.wkeSetContextMenuEnabled(self.cId,en)
+        wkeSetContextMenuEnabled(self.cId,en)
 
 
     def addPluginDirectory(self,_path):
@@ -825,7 +825,7 @@ class WebView():
         Args:
             en(bool): True使能,False禁止
         """
-        self.dll.wkeAddPluginDirectory(self.cId,_path)
+        wkeAddPluginDirectory(self.cId,_path)
         return
 
     def setNpapiPluginsEnabled(self,en):
@@ -835,7 +835,7 @@ class WebView():
             en(bool): True使能,False禁止
         """
 
-        self.dll.wkeSetNpapiPluginsEnabled(self.cId,en)
+        wkeSetNpapiPluginsEnabled(self.cId,en)
         return
     
     def setCspCheckEnable(self,en=False):
@@ -844,7 +844,7 @@ class WebView():
         Args:
             en(bool): True使能,False禁止    
         """
-        self.dll.wkeSetCspCheckEnable(self.cId,en)
+        wkeSetCspCheckEnable(self.cId,en)
         return
     
     def setDebugConfig(self,debugString:str,param):
@@ -872,7 +872,7 @@ class WebView():
         debug=debugString.encode()
         if isinstance(param,str):
             param=param.encode()
-        self.dll.wkeSetDebugConfig(self.cId,debug,param)
+        wkeSetDebugConfig(self.cId,debug,param)
 
     def setHeadlessEnabled(self,en:bool):  
         """开启无头模式与否
@@ -881,7 +881,7 @@ class WebView():
         Args:
             en(bool): True使能,False禁止  
         """
-        self.dll.wkeSetHeadlessEnabled(self.cId,en)
+        wkeSetHeadlessEnabled(self.cId,en)
         return
 
     def setTouchEnabled(self,en:bool):
@@ -892,8 +892,8 @@ class WebView():
             en(bool): True使能,False禁止  
         """
         b=not en
-        self.dll.wkeSetTouchEnabled(self.cId,en)
-        self.dll.wkeSetMouseEnabled(self.cId,b)
+        wkeSetTouchEnabled(self.cId,en)
+        wkeSetMouseEnabled(self.cId,b)
         return
     
     def setDeviceParameter(self,device,paramStr,paramInt,paramFloat):
@@ -921,7 +921,7 @@ class WebView():
             device=b''
         else:
             device=device.encode()
-        self.dll.wkeSetDeviceParameter(self.cId, device,paramStr,c_int(paramInt),c_float(paramFloat)) 
+        wkeSetDeviceParameter(self.cId, device,paramStr,c_int(paramInt),c_float(paramFloat)) 
         return
 
     def setNavigationToNewWindowEnable(self,en):
@@ -930,60 +930,60 @@ class WebView():
         Args:
             en(bool): True允许,False禁止,所有新窗口跳转都在本窗口进行  
         """
-        self.dll.wkeSetNavigationToNewWindowEnable(self.cId,en)
+        wkeSetNavigationToNewWindowEnable(self.cId,en)
         return
     
     ##############File##############           
     def goForward(self):
         """页面前进,在历史列表中前进
         """
-        self.dll.wkeGoForward(self.cId)
+        wkeGoForward(self.cId)
 
     def canGoForward(self):
         """页面是否能前进
         """
-        return self.dll.wkeCanGoForward(self.cId)
+        return wkeCanGoForward(self.cId)
 
     def goBack(self):
         """网页页面回退
         """
-        self.dll.wkeGoBack(self.cId)
+        wkeGoBack(self.cId)
 
     def canGoBack(self):
         """页面是否能回退
         """
-        return self.dll.wkeCanGoBack(self.cId)
+        return wkeCanGoBack(self.cId)
     
 
     def editorSelectAll(self):
         """页面全选
         """
-        return self.dll.wkeEditorSelectAll(self.cId)       
+        return wkeEditorSelectAll(self.cId)       
     def editorUnSelect(self):
         """页面反选
         """
-        return self.dll.wkeEditorUnSelect(self.cId)  
+        return wkeEditorUnSelect(self.cId)  
     def editorCopy(self):
         """页面选择复制
         """
-        return self.dll.wkeEditorCopy(self.cId)    
+        return wkeEditorCopy(self.cId)    
     def editorCut(self):
         """页面选择复制
         """
-        return self.dll.wkeEditorCut(self.cId)  
+        return wkeEditorCut(self.cId)  
     
     def editorDelete(self):
         """页面选择删除
         """
-        return self.dll.wkeEditorDelete(self.cId)     
+        return wkeEditorDelete(self.cId)     
     def editorUndo(self):
         """页面选择撤销
         """
-        return self.dll.wkeEditorUndo(self.cId) 
+        return wkeEditorUndo(self.cId) 
     def editorRedo(self):
         """页面选择重做
         """
-        return self.dll.wkeEditorRedo(self.cId) 
+        return wkeEditorRedo(self.cId) 
         
     def loadURL(self,url:str):
         """网页页面加载指定的链接地址
@@ -991,7 +991,7 @@ class WebView():
         Args:
             url(str): 网页链接地址
         """
-        return self.dll.wkeLoadURL(self.cId,url.encode())
+        return wkeLoadURL(self.cId,url.encode())
 
     def loadURLW(self,url):
         """网页页面加载指定的链接地址,unicode
@@ -999,7 +999,7 @@ class WebView():
         Args:
             url(str): 网页链接地址
         """
-        return self.dll.wkeLoadURLW(self.cId,url)
+        return wkeLoadURLW(self.cId,url)
 
     def loadHTML(self,html:str):
         """网页页面加载指定的HTML内容,string
@@ -1007,7 +1007,7 @@ class WebView():
         Args:
             html(str): HTML内容
         """
-        self.dll.wkeLoadHTML(self.cId,html.encode())
+        wkeLoadHTML(self.cId,html.encode())
 
     def loadHTMLW(self,html):
         """网页页面加载指定的HTML内容,unicode
@@ -1015,7 +1015,7 @@ class WebView():
         Args:
             html(str): HTML内容
         """
-        self.dll.wkeLoadHTMLW(self.cId,html)
+        wkeLoadHTMLW(self.cId,html)
 
     def loadFile(self,file_path):
         """网页页面加载指定的HTML文件
@@ -1024,7 +1024,7 @@ class WebView():
             file_path(str): HTML文件路径
         """
         file_path=file_path.encode()
-        self.dll.wkeLoadFile(self.cId,file_path)
+        wkeLoadFile(self.cId,file_path)
         return 
     
     def postURL(self,data):
@@ -1032,18 +1032,18 @@ class WebView():
         """
         data=data.encode()
         lens=len(data)
-        self.dll.wkeLoadURLW(self.cId,data,lens)
+        wkeLoadURLW(self.cId,data,lens)
         return 
     
     def reload(self):
         """网页刷新
         """
-        return self.dll.wkeReload(self.cId)
+        return wkeReload(self.cId)
 
     def stopLoading(self):
         """网页停止加载
         """
-        return self.dll.wkeStopLoading(self.cId)
+        return wkeStopLoading(self.cId)
 
 
 
@@ -1053,7 +1053,7 @@ class WebView():
         Returns:
             str:    地址
         """
-        url=self.dll.wkeGetURL(self.cId)
+        url=wkeGetURL(self.cId)
         return url.decode()
     
     def getFrameUrl(self,frameId):
@@ -1064,7 +1064,7 @@ class WebView():
         Returns:
             str:    地址
         """
-        url=self.dll.wkeGetFrameUrl(self.cId,frameId)
+        url=wkeGetFrameUrl(self.cId,frameId)
         return url.decode('utf8')  
     
     def getSource(self):
@@ -1073,7 +1073,7 @@ class WebView():
         Returns:
             str:    内容
         """
-        source=self.dll.wkeGetSource(self.cId)
+        source=wkeGetSource(self.cId)
         return source.decode()
     
     def utilSerializeToMHTML(self):
@@ -1081,7 +1081,7 @@ class WebView():
         Todo: 
             API文档上没有这一段
         """
-        mhtml_content=self.dll.wkeUtilSerializeToMHTML(self.cId)
+        mhtml_content=wkeUtilSerializeToMHTML(self.cId)
         return mhtml_content
 
 
@@ -1094,7 +1094,7 @@ class WebView():
         """
         lens=len(data)
         if lens!=0:
-            self.dll.wkeNetSetData(job,data,lens)
+            wkeNetSetData(job,data,lens)
             return True
         elif file_name!=None:
             with open(file_name) as f:
@@ -1103,10 +1103,10 @@ class WebView():
                 lens=len(data)
             if lens!=0:
                 if '.js' in file_name:
-                    self.dll.wkeNetSetMIMEType(job,b'text/javascript')
+                    wkeNetSetMIMEType(job,b'text/javascript')
                 elif '.html' in file_name:
-                    self.dll.wkeNetSetMIMEType(job,b'text/html')
-                self.dll.wkeNetSetData(job,data,lens)
+                    wkeNetSetMIMEType(job,b'text/html')
+                wkeNetSetData(job,data,lens)
                 return True
         return False    
     
@@ -1117,7 +1117,7 @@ class WebView():
         """  
         for x in ident_ls:
             if  x in url:
-                self.dll.wkeNetCancelRequest(job)
+                wkeNetCancelRequest(job)
                 return True
         return False
     
@@ -1127,7 +1127,7 @@ class WebView():
             没修正
         """  
         if ident not in url:return '',0,None
-        elements=self.dll.wkeNetGetPostBody(job)
+        elements=wkeNetGetPostBody(job)
         try:
             data=elements.contents.element.contents.contents.data.contents.data
             lens=elements.contents.element.contents.contents.data.contents.length
@@ -1176,8 +1176,8 @@ class WebView():
         """
         cookie=cookie.split(';')
         for x in cookie:
-            self.dll.wkeSetCookie(self.cId,url.encode('utf8'),x.encode('utf8'))
-        #self.dll.wkePerformCookieCommand(self.cId,2)
+            wkeSetCookie(self.cId,url.encode('utf8'),x.encode('utf8'))
+        #wkePerformCookieCommand(self.cId,2)
         return
     
     def getCookieW(self):
@@ -1187,7 +1187,7 @@ class WebView():
             str:    页面cookie字符串
 
         """
-        return self.dll.wkeGetCookieW(self.cId)
+        return wkeGetCookieW(self.cId)
 
     def clearCookie(self):
         """清除页面cookie
@@ -1196,7 +1196,7 @@ class WebView():
             官方文档说目前只支持清理所有页面的cookie。
             
         """
-        self.dll.wkeClearCookie(self.cId)
+        wkeClearCookie(self.cId)
 
 
     def setLocalStorageFullPath(self,path):
@@ -1204,7 +1204,7 @@ class WebView():
 
         *注意*：这个接口只能接受目录。如“c:\\mb\\LocalStorage\”
         """
-        self.dll.wkeSetLocalStorageFullPath(self.cId,path)
+        wkeSetLocalStorageFullPath(self.cId,path)
         return
     
     def setCookieJarPath(self,path):
@@ -1215,7 +1215,7 @@ class WebView():
 
         默认是当前目录。cookies存在当前目录的“cookie.dat”里
         """
-        return self.dll.wkeSetCookieJarPath(self.cId,path)
+        return wkeSetCookieJarPath(self.cId,path)
    
     def setCookieJarFullPath(self,path):
         """设置页面cookie文件的全路径
@@ -1225,12 +1225,12 @@ class WebView():
 
         设置cookie的全路径+文件名，如“c:\\mb\\cookie.dat”
         """
-        return self.dll.wkeSetCookieJarFullPath(self.cId,path)
+        return wkeSetCookieJarFullPath(self.cId,path)
 
 
     ##############JS##############
     def getJsExec(self):
-        return self.dll.wkeGlobalExec(self.cId)
+        return wkeGlobalExec(self.cId)
 
     def runJsCode(self,js_code:str):
         """页面执行一段指定的js代码
@@ -1242,8 +1242,8 @@ class WebView():
         """
         es=self.getJsExec()
         #闭包执行JS
-        val=self.dll.wkeRunJSW(self.cId,js_code)
-        val=self.dll.jsToStringW(es,val)
+        val=wkeRunJSW(self.cId,js_code)
+        val=jsToStringW(es,val)
         if val=='undefined':
             val=None
         return val
@@ -1277,7 +1277,7 @@ class WebView():
         if thisValue == 0:
             funcName=funcName.encode()
             #获取window上的属性
-            func=self.dll.jsGetGlobal(es,funcName)
+            func=jsGetGlobal(es,funcName)
         else:
             pass
 
@@ -1286,19 +1286,19 @@ class WebView():
 
         for i,param in enumerate(paramList):
             if isinstance(param,str):
-                param=self.dll.jsStringW(es,param)
+                param=jsStringW(es,param)
             elif isinstance(param,int):
-                param=self.dll.jsInt(c_longlong(param))
+                param=jsInt(c_longlong(param))
             elif isinstance(param,float):
-                param=self.dll.jsFloat(param)
+                param=jsFloat(param)
             elif isinstance(param,bool):
-                param=self.dll.jsBoolean(param)
+                param=jsBoolean(param)
             argsList[i]=param
         #调用js
         #jsValue jsCall(jsExecState es, jsValue func, jsValue thisValue, jsValue* args, int argCount)
         #调用一个func对应的js函数。如果此js函数是成员函数，则需要填thisValue。 否则可以传jsUndefined。args是个数组，个数由argCount控制。 func可以是从js里取的，也可以是自行构造的。
-        callRet=self.dll.jsCall(es,c_longlong(func),c_longlong(thisValue),byref(argsList),c_longlong(argCount))
-        val=self.dll.jsToStringW(es,c_longlong(callRet))
+        callRet=jsCall(es,c_longlong(func),c_longlong(thisValue),byref(argsList),c_longlong(argCount))
+        val=jsToStringW(es,c_longlong(callRet))
         return val  
     
     def runJsByFrame(self,frameId,js_code,isInClosure=True):
@@ -1316,9 +1316,9 @@ class WebView():
 
         """
         js_code=js_code.encode()
-        val=self.dll.wkeRunJsByFrame(self.cId,frameId,js_code,isInClosure)
-        es = self.dll.wkeGetGlobalExecByFrame(self.cId, frameId)
-        val=self.dll.jsToTempStringW(es, c_longlong(val))
+        val=wkeRunJsByFrame(self.cId,frameId,js_code,isInClosure)
+        es = wkeGetGlobalExecByFrame(self.cId, frameId)
+        val=jsToTempStringW(es, c_longlong(val))
         return val
 
     ##############SendEventMessage##############
@@ -1333,7 +1333,7 @@ class WebView():
 
         """
         
-        return self.dll.wkeFireMouseEvent(self.cId,msg,x,y,flags)
+        return wkeFireMouseEvent(self.cId,msg,x,y,flags)
 
     def fireMouseWheelEvent(self,msg,x,y,delta,flags=0):
         """向页面发送鼠标滚轮事件
@@ -1347,7 +1347,7 @@ class WebView():
 
         """
         
-        return self.dll.wkeFireMouseWheelEvent(self.cId,msg,x,y,flags)
+        return wkeFireMouseWheelEvent(self.cId,msg,x,y,flags)
        
     def fireKeyDownEvent(self,virtualKeyCode,flags=0):
         """向页面发送键盘按下事件
@@ -1361,7 +1361,7 @@ class WebView():
 
         WM_CHAR消息的The character code of the key.见https://msdn.microsoft.com/en-us/library/windows/desktop/ms646276(v=vs.85).aspx
         """
-        return self.dll.wkeFireKeyDownEvent(self.cId,virtualKeyCode,flags,False)
+        return wkeFireKeyDownEvent(self.cId,virtualKeyCode,flags,False)
     
     def fireKeyUpEvent(self,virtualKeyCode,flags=0):
         """向页面发送键盘弹起事件
@@ -1373,7 +1373,7 @@ class WebView():
         Return:
             int: 如果应用程序处理此消息，则应返回零。
         """
-        return self.dll.wkeFireKeyUpEvent(self.cId,virtualKeyCode,flags,False)
+        return wkeFireKeyUpEvent(self.cId,virtualKeyCode,flags,False)
     
     def fireKeyPressEvent(self,virtualKeyCode,flags=0):
         """向页面发送键盘弹起事件
@@ -1385,7 +1385,7 @@ class WebView():
             int: 如果应用程序处理此消息，则应返回零。
 
         """
-        return self.dll.wkeFireKeyPressEvent(self.cId,virtualKeyCode,flags,False)
+        return wkeFireKeyPressEvent(self.cId,virtualKeyCode,flags,False)
     
     def fireWindowsMessage(self,msg,wParam,lParam):
         """向页面发送windows消息事件
@@ -1402,7 +1402,7 @@ class WebView():
         """
         #byref(
         result = c_int(-1)
-        self.dll.wkeFireWindowsMessage(self.cId,self.hwnd,msg,wParam,lParam,byref(result))
+        wkeFireWindowsMessage(self.cId,self.hwnd,msg,wParam,lParam,byref(result))
         return result.value
 
     ##############OnEvent##############
@@ -1500,9 +1500,9 @@ class WebWindow(WebView):
 
 
         """
-        self.cId = self.dll.wkeCreateWebWindow(_type,parent,x,y,width,height)
+        self.cId = wkeCreateWebWindow(_type,parent,x,y,width,height)
         self.type = _type
-        
+        self.hwnd = self.getWindowHandle()
         self.x,self.y = x,y
         self.w,self.h = width,height
         return self.cId
@@ -1520,11 +1520,11 @@ class WebWindow(WebView):
         if hwnd==0:
             return 0
         
-        self.cId = self.dll.wkeCreateWebWindow(2,hwnd,x,y,width,height)
+        self.cId = wkeCreateWebWindow(2,hwnd,x,y,width,height)
 
         self.type = _type
         self.hwnd = hwnd
-        #self.dll.wkeShowWindow(id,show)
+        #wkeShowWindow(id,show)
         self.x,self.y = x,y
         self.w,self.h = width,height
         return
@@ -1543,7 +1543,7 @@ class WebWindow(WebView):
     def destroy(self):
         """销毁wkeWebView对应的所有数据结构，包括真实窗口等
         """
-        self.dll.wkeDestroyWebWindow(self.cId)
+        wkeDestroyWebWindow(self.cId)
         return 
 
 

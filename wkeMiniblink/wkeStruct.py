@@ -1,5 +1,6 @@
 # -*- coding:utf-8 -*-
 import enum
+from platform import architecture
 
 from ctypes import (
     c_int,
@@ -29,7 +30,16 @@ from ctypes.wintypes import (
 )
 from ctypes import wintypes
 
-from . import _LRESULT
+
+
+_LRESULT=c_int
+bit=architecture()[0]
+
+miniblink_core_dll = '\\miniblink.dll'
+if bit == '64bit':
+    _LRESULT=c_longlong
+else:
+    _LRESULT=c_int
 
 class wkeMouseFlags(enum.IntEnum):
     WKE_LBUTTON = 0x01

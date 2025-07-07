@@ -1,6 +1,5 @@
 # -*- coding:utf-8 -*-
 import os,sys,platform,time
-from pprint import *
 from pathlib import Path
 import win32gui
 
@@ -9,38 +8,43 @@ father_folder = str(current_folder.parent)
 os.chdir(str(current_folder))
 sys.path.append(father_folder)
 
+init_path=os.getcwd()
+icon_path=f'{father_folder}/logo.ico'
+
 from wkeMiniblink.wke import Wke,WebView,WebWindow
 from wkeMiniblink.wkeEvent import WkeEvent
 from wkeMiniblink.wkeWin32 import *
+from wkeMiniblink.wkeWin32ProcMsg import wkeMsgProcResize,wkeMsgProcQuit
 
 def main():
     Wke.init()
     Wke.setCookieAndStagePath(cookie=f'{father_folder }/build/cookie.dat',localStage=f'{father_folder }/build/LocalStage')
     print("Miniblink Version :",Wke.version,"\n Version:",Wke.Version(),"\n DLL:",Wke.dllPath)
     webview = WebWindow()
-    webview.create(0,0,0,800,600)
 
-    def OnTheEvent(context,*args,**kwargs):
-        param = context["param"]
-        print(f"{str(param)} \nargs:{pformat(args)}\nkwargs:{pformat(kwargs)}\n=======================\n")
-        return 0
+    x,y,w,h = 0,0,640,480
+
+    hwnd = wkeCreateWindow('自创建Win窗口',x,y,w,h)
+    webview.build(hwnd,x,y,w,h)   
+    wkeSetIcon(webview.hwnd,icon_path)
+
+    a = HwndMsgAdapter()
+    a.registerMsgProc(WM_SIZE,wkeMsgProcResize)
+    a.registerMsgProc(WM_DESTROY,wkeMsgProcQuit)
+    a.attach(hwnd,webview)
 
     def OnCloseEvent(context,*args,**kwargs):
         win32gui.PostQuitMessage(0)
         return True
-
-
     
-    webview.onTitleChanged(OnTheEvent,'TITLE Changed')
     webview.onWindowClosing(OnCloseEvent,param='App Quit')
-    #webview.onDocumentReady2(OnTheEvent,'Document is Ready')
+   
+    webview.loadURL('https://www.baidu.com/')
 
-
-    
-    webview.loadURL('https://www.w3school.com.cn/jsref/index.asp')
     webview.showWindow(True)
-    #wkePumpMessages()
-    Wke.runMessageLoop()
+    win32gui.ShowWindow(hwnd,SW_SHOWNORMAL)
+    wkePumpMessages()
+    #Wke.runMessageLoop()
     #win32gui.PumpMessages()
 
 if __name__=='__main__':

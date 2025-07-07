@@ -10,6 +10,10 @@
 
 调整wkeEvent.py中的回调函数中额外参数在**kwargs中，而不是*args中，避免32/64位下错乱不一致
 
+修正Wke.extend/jsBindFunction的参数类型错误。以前32位下不报错，64位会转换类型报错
+
+修正了init.py中dll加载方式和全局函数声明，对应wkeEvent.py/wke.py中调用方式
+
 ### wkeGetString
 
 wkeEvent.py中32位下wkeGetStringW(str)运行正常,但是64位会c函数内部读异常。
