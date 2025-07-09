@@ -9,11 +9,12 @@ on:
     tags:
       - 'v*' # 当推送以 v 开头的标签时触发
   
-  pull_request:
-    branches: [ "main" ]
+
+  workflow_dispatch:
 
 permissions:
   contents: read
+
 
 jobs:
   build:
