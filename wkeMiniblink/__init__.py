@@ -11,6 +11,7 @@ from ctypes import (
     c_ushort,
     c_long,
     c_longlong,
+    c_ulonglong,
     c_char,
     c_char_p,
     c_wchar_p,
@@ -37,7 +38,6 @@ MINIBLINK_DLL_HANDLE=None
 
 miniblink_core_dll = '\\miniblink.dll'
 if bit == '64bit':
-    from ctypes import c_ulonglong
     miniblink_core_dll = '\\miniblink_4975_x64.dll'
     _LRESULT=c_longlong
 else:

@@ -3,6 +3,7 @@
 import platform,os,sys,getopt,time
 import traceback
 import copy
+from platform import architecture
 
 from pkg_resources import Requirement, resource_filename
 from setuptools import setup, find_packages
@@ -10,12 +11,11 @@ from setuptools import setup, find_packages
 with open('README.md', encoding='utf-8') as f:
     long_description = f.read()
 
-
 setup(
     #自动搜索包含__init__.py的文件夹
     packages=find_packages(exclude=["dist.*", "dist", "tests.*", "tests","__pycache__/*"]),
     package_data={
-        "wkeMiniblink": ["bin/*.dll"]#包含指定包下相对目录的匹配文件                 
+        "wkeMiniblink": ["bin/*.dll"]       #包含指定包下相对目录的匹配文件                 
     },
 
 

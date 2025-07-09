@@ -22,24 +22,40 @@ from wkeMiniblink.wkeEvent import WkeEvent
 from wkeMiniblink.wkeWin32 import *
 
 
+def runJsCode(**kwargs):
+  
+
+    es=kwargs['es']
+    webview =kwargs['param']
+    hwnd = webview.hwnd
+    arg_count=Wke.jsArgCount(es)
+    val_ls=Wke.getJsArgs(es,arg_count)
+    #print("args:",val_ls)
+    code = ""
+    for v in val_ls:
+        code = code + str(v)
+    ret = webview.runJsCode(code)
+    return ret
 
 def testJs():
-
+    #没什么用,js和py的互相返回值没验证,用不了
     webview = WebWindow()
-    webview.create(0,0,0,800,400)
+    webview.create(0,0,0,400,300)
 
     hwnd = webview.getWindowHandle()
     
     wkeSetIcon(hwnd,f'{father_folder}/logo.ico')
+
+    Wke.extend(runJsCode,'runJsCode', param=webview)
 
     def OnCloseEvent(context,*args,**kwargs):
         win32gui.PostQuitMessage(0)
         return True
     webview.onWindowClosing(OnCloseEvent,param='App Quit')
     
-    webview.loadFile(f'{father_folder}/res/testdata/testJs.html')
-
-
+    webview.loadFile(f'{father_folder}/res/testdata/testRunJs.html')
+    
+    webview.moveToCenter()
     webview.showWindow(True)
     Wke.runMessageLoop()
     return 

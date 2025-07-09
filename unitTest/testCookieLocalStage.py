@@ -46,7 +46,7 @@ class Test( unittest . TestCase ):
             shutil.rmtree(localStagePath)
         self.assertEqual(os.path.isfile(cookiePath),False)
         self.assertEqual(os.path.isdir(localStagePath),False)
-        Wke.init()
+        
        
         print("Miniblink Version :",Wke.version,"\n Version:",Wke.Version(),"\n DLL:",Wke.dllPath)
 

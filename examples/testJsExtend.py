@@ -23,10 +23,6 @@ from wkeMiniblink.wkeWin32 import *
 
 
 
-init_path=os.getcwd()
-icon_path=f'{father_folder}/logo.ico'
-
-
 
 
 def jsCallpy(**kwargs):
@@ -70,9 +66,6 @@ def extendJS(**kwargs):
 
   
 
-
-
-
 def testJsExtend():
 
     webview = WebWindow()
@@ -80,7 +73,7 @@ def testJsExtend():
 
     hwnd = webview.getWindowHandle()
     
-    wkeSetIcon(hwnd,icon_path)
+    wkeSetIcon(hwnd,f'{father_folder}/logo.ico')
 
 
     Wke.extend(jsCallpy,'jsCallpy', param=webview)
@@ -99,7 +92,7 @@ def testJsExtend():
 
 
 def main():
-    Wke.init()
+    
     Wke.setCookieAndStagePath(cookie=f'{father_folder }/build/cookie.dat',localStage=f'{father_folder }/build/LocalStage')
     print("Miniblink Version :",Wke.version,"\n Version:",Wke.Version(),"\n DLL:",Wke.dllPath)
     testJsExtend()  

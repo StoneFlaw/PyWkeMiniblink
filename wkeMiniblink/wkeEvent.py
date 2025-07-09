@@ -29,16 +29,19 @@ from .miniblink import *
 class WkeEvent():
     """Wke关于webview的事件管理
 
+    一般使用格式
+    
     事件注册:   onXXXX(webview,func,param)
 
-    卸载    :   offXXX(webview,func)
+    事件回调:   func(context,*args,**kwargs)    事件发生时回调func函数
+    
+    context作为通用上下文字典,包括{"id":eventid,"param":param,"func":func,"webview":pwebview,"id":pwebview.cId,"event":event}
+    kwargs作为特点上下文字典,包括了具体事件的一些参数,详见具体事件注释
 
-    事件回调:   func(webview,param,*args,**kwargs)
 
     Example:
         .. code:: python
 
-            Wke.init()
             webview = WebWindow()
             webview.create(0,0,0,800,600)
             def OnEvent(context,*args,**kwargs):
@@ -53,7 +56,7 @@ class WkeEvent():
             Wke.runMessageLoop()         
     """
   
-    def __init__(self,dll=None):
+    def __init__(self):
         """WkeEvent构造函数
 
         """
@@ -153,7 +156,7 @@ class WkeEvent():
         
         .. code:: c
 
-            //python 事件响应函数(context:dict,kwargs={frameId:int})         
+            //python 事件响应函数 func(context:dict,kwargs={frameId:int})         
             /*typedef void(WKE_CALL_TYPE*wkeDocumentReady2Callback)(wkeWebView webView, void* param, wkeWebFrameHandle frameId);*/
 
         Args:
@@ -180,7 +183,7 @@ class WkeEvent():
 
         .. code:: c
 
-            //python 事件响应函数 int (context:dict,kwargs=[navigationType:wkeNavigationType,url:str,windowFeatures:wkeWindowFeatures])
+            //python 事件响应函数 (context:dict,kwargs=[navigationType:wkeNavigationType,url:str,windowFeatures:wkeWindowFeatures]) ->int 
             /*typedef wkeWebView(WKE_CALL_TYPE*wkeCreateViewCallback)(wkeWebView webView, void* param, wkeNavigationType navigationType, const wkeString url, const wkeWindowFeatures* windowFeatures);*/
             
         Args:
@@ -206,7 +209,7 @@ class WkeEvent():
 
         .. code:: c
 
-            //python 事件响应函数(context:dict,kwargs={frameId:int,url:str})
+            //python 事件响应函数 func(context:dict,kwargs={frameId:int,url:str})
             /*typedef void(WKE_CALL_TYPE*wkeURLChangedCallback2)(wkeWebView webView, void* param, wkeWebFrameHandle frameId, const wkeString url);*/
 
         Args:
@@ -233,7 +236,7 @@ class WkeEvent():
 
         .. code:: c
 
-            //python 事件响应函数(context:dict,kwargs=None)
+            //python 事件响应函数 func(context:dict,kwargs=None)->bool
             /*typedef bool(WKE_CALL_TYPE*wkeWindowClosingCallback)(wkeWebView webWindow, void* param);*/ 
         
         Args:
@@ -256,7 +259,7 @@ class WkeEvent():
 
         .. code:: c
 
-            //python 事件响应函数(context:dict,kwargs=None)
+            //python 事件响应函数 func(context:dict,kwargs=None)
             /*typedef void(WKE_CALL_TYPE*wkeWindowDestroyCallback)(wkeWebView webWindow, void* param);*/
             
         Args:
@@ -281,7 +284,7 @@ class WkeEvent():
 
         .. code:: c
 
-            //python 事件响应函数(context:dict,kwargs={hdc:_LRESULT,x:int,y:int,cx:int,cy:int})
+            //python 事件响应函数 func(context:dict,kwargs={hdc:_LRESULT,x:int,y:int,cx:int,cy:int})
             /*typedef void(WKE_CALL_TYPE*wkePaintUpdatedCallback)(wkeWebView webView, void* param, const HDC hdc, int x, int y, int cx, int cy);*/
 
         Args:
@@ -307,7 +310,7 @@ class WkeEvent():
 
         .. code:: c
         
-            //python 事件响应函数(context:dict,kwargs={buf:c_char_p,rect:struct,cx:int,cy:int}) 
+            //python 事件响应函数 func(context:dict,kwargs={buf:c_char_p,rect:struct,cx:int,cy:int}) 
             /*typedef void(WKE_CALL_TYPE*wkePaintBitUpdatedCallback)(wkeWebView webView, void* param, const void* buffer, const wkeRect* r, int width, int height);*/
 
         Args:
@@ -332,7 +335,7 @@ class WkeEvent():
 
         .. code:: c
 
-            //python 事件响应函数(context:dict,kwargs={navigationType:wkeNavigationType,url:str}) 
+            //python 事件响应函数 func(context:dict,kwargs={navigationType:wkeNavigationType,url:str}) -> bool 
             /*typedef bool(WKE_CALL_TYPE*wkeNavigationCallback)(wkeWebView webView, void* param, wkeNavigationType navigationType, wkeString url);*/
 
         Args:
@@ -370,7 +373,7 @@ class WkeEvent():
 
         .. code:: c
 
-            //python 事件响应函数(context:dict,kwargs={title:str}) 
+            //python 事件响应函数 func(context:dict,kwargs={title:str}) 
             /*typedef void(WKE_CALL_TYPE*wkeTitleChangedCallback)(wkeWebView webView, void* param, const wkeString title);*/
 
         Args:
@@ -397,7 +400,7 @@ class WkeEvent():
 
         .. code:: c
 
-            //python 事件响应函数(context:dict,kwargs={url:str}) 
+            //python 事件响应函数 func(context:dict,kwargs={url:str}) 
             /*typedef void(WKE_CALL_TYPE*wkeTitleChangedCallback)(wkeWebView webView, void* param, const wkeString title);*/
 
         Args:
@@ -421,7 +424,7 @@ class WkeEvent():
 
         .. code:: c
 
-            //python 事件响应函数(context:dict,kwargs={msg:str}) 
+            //python 事件响应函数 func(context:dict,kwargs={msg:str}) 
             /*typedef void(WKE_CALL_TYPE*wkeAlertBoxCallback)(wkeWebView webView, void* param, const wkeString msg);*/
 
         Args:
@@ -450,7 +453,7 @@ class WkeEvent():
 
         .. code:: c
 
-            //python 事件响应函数(context:dict,kwargs={msg:str}) 
+            //python 事件响应函数 func(context:dict,kwargs={msg:str})->bool
             /*typedef bool(WKE_CALL_TYPE*wkeConfirmBoxCallback)(wkeWebView webView, void* param, const wkeString msg);*/
 
         Args:
@@ -483,7 +486,7 @@ class WkeEvent():
 
         .. code:: c
 
-            //python 事件响应函数(context:dict,kwargs={msg:str,defaultResult:str}) 
+            //python 事件响应函数 func(context:dict,kwargs={msg:str,defaultResult:str}) -> bool
             /*typedef bool(WKE_CALL_TYPE*wkePromptBoxCallback)(wkeWebView webView, void* param, const wkeString msg, const wkeString defaultResult, wkeString result);*/
 
         Args:
@@ -513,7 +516,7 @@ class WkeEvent():
 
         .. code:: c
 
-            //python 事件响应函数(context:dict,kwargs={level:str,msg:str,sourceName:str,sourceLine:int,stackTrace:str}) 
+            //python 事件响应函数 func(context:dict,kwargs={level:str,msg:str,sourceName:str,sourceLine:int,stackTrace:str}) 
             /*typedef void(WKE_CALL_TYPE*wkeConsoleCallback)(wkeWebView webView, void* param, wkeConsoleLevel level, const wkeString message, const wkeString sourceName, unsigned sourceLine, const wkeString stackTrace);*/
 
         Args:
@@ -542,7 +545,7 @@ class WkeEvent():
 
         .. code:: c
 
-            //python 事件响应函数(context:dict,kwargs={url:str}) 
+            //python 事件响应函数 func(context:dict,kwargs={url:str}) -> bool
             /*typedef bool(WKE_CALL_TYPE*wkeDownloadCallback)(wkeWebView webView, void* param, const char* url);*/
 
         Args:
@@ -571,7 +574,7 @@ class WkeEvent():
         
         .. code:: c
 
-            //python 事件响应函数(context:dict,kwargs={url:str,job:c_void_p})  
+            //python 事件响应函数 func(context:dict,kwargs={url:str,job:c_void_p}) -> bool
             /*typedef bool(WKE_CALL_TYPE*wkeNetResponseCallback)(wkeWebView webView, void* param, const utf8* url, wkeNetJob job);*/
 
         Args:
@@ -602,7 +605,7 @@ class WkeEvent():
 
         .. code:: c
 
-            //python 事件响应函数(context:dict,kwargs={url:str,job:c_void_p})  
+            //python 事件响应函数 func(context:dict,kwargs={url:str,job:c_void_p}) -> bool
             /*typedef bool(WKE_CALL_TYPE*wkeLoadUrlBeginCallback)(wkeWebView webView, void* param, const utf8* url, wkeNetJob job);*/
 
         Args:
@@ -634,7 +637,7 @@ class WkeEvent():
 
         .. code:: c
 
-            //python 事件响应函数(context:dict,kwargs={url:str,job:c_void_p,buf:c_char_p,len:int})  
+            //python 事件响应函数 func(context:dict,kwargs={url:str,job:c_void_p,buf:c_char_p,len:int})  
             /*typedef void(WKE_CALL_TYPE*wkeLoadUrlEndCallback)(wkeWebView webView, void* param, const utf8* url, wkeNetJob job, void* buf, int len);*/
 
         Args:
@@ -661,7 +664,7 @@ class WkeEvent():
 
         .. code:: c
 
-            //python 事件响应函数(context:dict,kwargs={url:str,job:c_void_p})  
+            //python 事件响应函数 func(context:dict,kwargs={url:str,job:c_void_p})  
             /*typedef void(WKE_CALL_TYPE*wkeLoadUrlFailCallback)(wkeWebView webView, void* param, const utf8* url, wkeNetJob job);*/
 
         Args:
@@ -687,7 +690,7 @@ class WkeEvent():
 
         .. code:: c
 
-            //python 事件响应函数(context:dict,kwargs={url:str,result:int,failedReason:str})  
+            //python 事件响应函数 func(context:dict,kwargs={url:str,result:int,failedReason:str})  
             /*typedef void(WKE_CALL_TYPE*wkeLoadUrlFinishCallback)(wkeWebView webView, void* param, const utf8* url, wkeNetJob job, int len);*/
 
         Args:
@@ -722,7 +725,7 @@ class WkeEvent():
 			    
         .. code:: c
 
-            //python 事件响应函数(context:dict,kwargs={url:str,buf:wkeMemBuf *})  
+            //python 事件响应函数 func(context:dict,kwargs={url:str,buf:wkeMemBuf *})  
             /*typedef void(WKE_CALL_TYPE*wkeOnNetGetFaviconCallback)(wkeWebView webView, void* param, const utf8* url, wkeMemBuf* buf);*/
 
         Args:

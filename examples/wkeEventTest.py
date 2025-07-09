@@ -21,8 +21,8 @@ from win32con import *
 from ctypes import windll
 
 
-init_path=os.getcwd()
-icon_path=f'{father_folder}/logo.ico'
+
+
 
 
 
@@ -51,7 +51,7 @@ def get_hwnd(x=0,y=0,w=860,h=760):
 
 
 def main():
-    Wke.init()
+    
     Wke.setCookieAndStagePath(cookie=f'{father_folder }/build/cookie.dat',localStage=f'{father_folder }/build/LocalStage')
     print("Miniblink Version :",Wke.version,"\n Version:",Wke.Version(),"\n DLL:",Wke.dllPath)
 

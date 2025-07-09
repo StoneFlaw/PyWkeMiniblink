@@ -62,7 +62,7 @@ class Test( unittest . TestCase ):
 
     
 if __name__=='__main__':
-    Wke.init()
+    
     Wke.setCookieAndStagePath(cookie=f'{father_folder }/build/cookie.dat',localStage=f'{father_folder }/build/LocalStage')
     print("Miniblink Version :",Wke.version,"\n Version:",Wke.Version(),"\n DLL:",Wke.dllPath)
     suit = unittest.TestSuite()

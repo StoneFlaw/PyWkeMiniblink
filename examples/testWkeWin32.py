@@ -8,8 +8,8 @@ father_folder = str(current_folder.parent)
 os.chdir(str(current_folder))
 sys.path.append(father_folder)
 
-init_path=os.getcwd()
-icon_path=f'{father_folder}/logo.ico'
+
+
 
 from wkeMiniblink.wke import Wke,WebView,WebWindow
 from wkeMiniblink.wkeEvent import WkeEvent
@@ -17,7 +17,7 @@ from wkeMiniblink.wkeWin32 import *
 from wkeMiniblink.wkeWin32ProcMsg import wkeMsgProcResize,wkeMsgProcQuit
 
 def main():
-    Wke.init()
+    
     Wke.setCookieAndStagePath(cookie=f'{father_folder }/build/cookie.dat',localStage=f'{father_folder }/build/LocalStage')
     print("Miniblink Version :",Wke.version,"\n Version:",Wke.Version(),"\n DLL:",Wke.dllPath)
     webview = WebWindow()
@@ -26,7 +26,7 @@ def main():
 
     hwnd = wkeCreateWindow('自创建Win窗口',x,y,w,h)
     webview.build(hwnd,x,y,w,h)   
-    wkeSetIcon(webview.hwnd,icon_path)
+    wkeSetIcon(hwnd,f'{father_folder}/logo.ico')
 
     a = HwndMsgAdapter()
     a.registerMsgProc(WM_SIZE,wkeMsgProcResize)
@@ -39,7 +39,7 @@ def main():
     
     webview.onWindowClosing(OnCloseEvent,param='App Quit')
    
-    webview.loadURL('https://www.baidu.com/')
+    webview.loadURL('https://www.w3school.com.cn/jsref/index.asp')
 
     webview.showWindow(True)
     win32gui.ShowWindow(hwnd,SW_SHOWNORMAL)

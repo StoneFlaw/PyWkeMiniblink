@@ -19,7 +19,7 @@
         {
             "label": "unitTest",
             "type": "shell",
-            "command": "python -m unittest discover -s unitTest", //暂时有问题
+            "command": "python -m unittest discover -s unitTest", 
             "args": [],
             "echo": true,  
             "presentation":{

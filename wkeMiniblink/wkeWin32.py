@@ -747,7 +747,7 @@ class HwndMsgAdapter():
         Keyword Args:
             hwnd(int):  父窗口句柄
             webview(WebView):   父窗口对应的WebView/WebWindow网页对象
-
+        
         """
         if hwnd is not None:
             self.hwnd = hwnd
@@ -764,7 +764,6 @@ class HwndMsgAdapter():
         self.attached = True
         self.oldHwndProc = wkeReplaceHWndProc(hwnd,self._onWndProcCallback)
 
-        
         return
     
     def detach(self):

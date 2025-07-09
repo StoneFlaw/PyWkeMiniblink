@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>Wke 对象</h1>
+
+<h2>runJsCode() 方法</h2>
+
+<label for="code">Code:</label>
+<input type="text" id="code" name="code">
+<script>
+
+function runCode(){
+	let inputText = document.getElementById("code").value;
+	ret = runJsCode(inputText);
+	
+}
+</script>
+<button onclick="runCode()" style='margin-middle: 20px;cursor: pointer;'>runCode()</button>
+
+</body>
+</html>

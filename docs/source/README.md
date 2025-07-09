@@ -1,11 +1,18 @@
 # 简介
 
+
+
+**关于PyWkeMiniblink**
+
+PyWkeMiniblink 是 [Miniblink](https://weolar.github.io/miniblink/)的Python绑定，参考了上游项目[MBPython](https://github.com/lochen88/MBPython)。
+
 PyWkeMiniblink： [项目地址](https://github.com/StoneFlaw/PyWkeMiniblink)  /  [在线文档](https://pywkeminiblink.readthedocs.io/zh-cn/latest/)  / [PYPI主页](https://pypi.org/project/WkeMiniblink/)
 
-
-PyWkeMiniblink 是 [Miniblink](https://weolar.github.io/miniblink/)的Python绑定，参考源了上游项目[MBPython](https://github.com/lochen88/MBPython)。
+**关于Miniblink**
 
 Miniblink 是 chromium的精简版，删除了音视频功能,原接口参见[官方接口文档](https://miniblink.net/views/doc/index.html),更完整的参见docs/source/wke.h 。
+
+
 
 # 使用
 
@@ -20,28 +27,6 @@ pip3 install WkeMiniblink-xx-py3-none-any.whl
 pip3 install WkeMiniblink
 ```
 
-## 发布
-
-### pyinstaller
-
-(Pyinstaller>=6.0.0 )
-
-- 在Pyinstaller打包 one dir（-D 目录模式）时，除可执行文件外，其余文件都将被转移到 _internal 文件夹
-
-    以此为Package的根目录
-
-- 在Pyinstaller打包 one file （-F 文件模式）时，除可执行文件外，其余文件都将被转移到一个临时文件夹
-
-    以此为Package的根目录
-
-- 在Python解释器模式下,以Lib\site-packages
-
-    以此为Package的根目录
-
-
-
-wkeMiniblink 搜索 解释器目录/Package的根目录，具体参见find_miniblink()
-
 
 
 ## 示例
@@ -55,7 +40,6 @@ from wkeMiniblink.wkeEvent import *
 from wkeMiniblink.wkeWin32 import *
 
 if __name__=='__main__':
-    Wke.init()
     webview = WebWindow()
     webview.create(0,0,0,800,600)
     def OnCloseEvent(context,*args,**kwargs):
@@ -71,41 +55,19 @@ if __name__=='__main__':
 
 ## 全局接口Wke
 
-### DLL初始化
+### DLL加载
 
-静态类函数:Wke.init(DLL路径)
+目前版本采用PyWkeMiniblink包初始化时自动加载dll。
 
-需要在所有Wke调用前加载一次，且后续所有wke相关的API调用需要在同一线程。
+32位模式加载miniblink_4975_x32.dll,64位模式加载miniblink_4975_x64.dll。
 
-### Javascript 扩展
+搜索DLL所在位置的顺序:
 
-静态类函数:Wke.extend(py实现函数，js函数名,上下文参数)
+1. 脚本模式下python.exe所在在目录是否含有dll，PyInstaller打包模式下Package根目录否含有dll;
+2. PyWkeMiniblink包所在目录下的bin目录是否含有dll;
+3. 系统环境变量的目录下是否含有dll;
 
-使用一个指定的python函数作为js扩展实现的函数
 
-Example:
-
-```python
-    webview = WebWindow()
-    webview.create(0,0,0,800,600)
-   
-    def pyAction(**kwargs):
-        es=kwargs['es']
-        context =kwargs['param']
-        webview = context
-        arg_count=Wke.jsArgCount(es)
-        val_ls=Wke.getJsArgs(es,arg_count)
-        webview.runJsCode('alert("jsCallpy'+str(val_ls)+'")')
-        return
-    
-    Wke.extend(pyAction,'jsCallpy', param=webview)
-```
-
- 在html/js 中调用
-
-```html
-<button onclick="jsCallpy('jsCallpy', 666)" style='margin-right: 20px;cursor: pointer;'>jsCallpy</button>
-```
 
 ## 创建网页对象的方式
 
@@ -182,15 +144,15 @@ wkeWin32的**HwndMsgAdapter**使用自身的消息处理流程替换指定父窗
 
 注册的消息响应函数可以有1~5个参数,如下:
 
-| Arg1    | Arg2   | Arg3   | Arg4   | Arg5   |
-| ------- | ------ | ------ | ------ | ------ |
-| webview | hwnd   | msg    | wParam | lParam |
-| self    | hwnd   | msg    | wParam | lParam |
-| hwnd    | msg    | wParam | lParam |        |
-| hwnd    | wParam | lParam |        |        |
+|  Arg1   |  Arg2  |  Arg3  |  Arg4  |  Arg5  |
+| :-----: | :----: | :----: | :----: | :----: |
+| webview |  hwnd  |  msg   | wParam | lParam |
+|  self   |  hwnd  |  msg   | wParam | lParam |
+|  hwnd   |  msg   | wParam | lParam |        |
+|  hwnd   | wParam | lParam |        |        |
 | wParam  | lParam |        |        |        |
-| self    |        |        |        |        |
-| hwnd    |        |        |        |        |
+|  self   |        |        |        |        |
+|  hwnd   |        |        |        |        |
 
 HwndMsgAdapter的消息处理流程调用注册的消息响应函数时:
 
@@ -216,7 +178,7 @@ Example:
     ....
 ```
 
-
+***需要注意窗：替换消息处理函数与消息处理循环之间的穿插wke的某些窗体控制函数可能导致问题！***
 
 ## 事件WkeEvent
 
@@ -232,15 +194,14 @@ Example:
 
 ###  事件处理函数func(context,*args,**kwargs)
 
-​		经WkeEvent的翻译，传递给事件响应函数的上下文context是个字典，如下：
+- ​		经WkeEvent的翻译，传递给事件响应函数的上下文context是个字典，如下：
 
-```python
-context = {"id":eventid,"param":param,"func":func,"webview":webview,"id":webview.cId,"event":event}
-```
+    ​		context = {"id":eventid,"param":param,"func":func,"webview":webview,"id":webview.cId,"event":event}
 
-​		**其中param是注册回调函数绑定的任意python object对象，func是绑定的python回调函数**
+- ​		param是注册回调函数时OnXXX(func,param)绑定的任意python object对象，func是绑定的python回调函数
 
-​		不同的事件有特定的扩展参数，都写在kwargs中，例如Alert事件中通知消息就在kwargs["msg"]中
+- ​		不同的事件有特定的扩展参数，都写在kwargs中，例如Alert事件中通知消息就在kwargs["msg"]中
+
 
 Example:
 
@@ -249,7 +210,7 @@ Example:
 #/*typedef void(WKE_CALL_TYPE*wkeAlertBoxCallback)(wkeWebView webView, void* param, const wkeString msg);*/
 # OnAlertCallback回调函数执行时包含: kwargs["msg"]
 def main():
-	Wke.init()
+	
     Wke.setCookieAndStagePath(cookie=f'{father_folder }/build/cookie.dat',localStage=f'{father_folder }/build/LocalStage')
     webview = WebWindow()
     webview.create(0,0,0,800,600)
@@ -284,7 +245,39 @@ webview.OnPaintEvent(param,*args,**kwargs)
 
 unittest/testWebViewOnEvent.py检查WkeEvent所有事件是否在WebView都有对应的绑定实现，并生成所需要的实现翻译代码。
 
+### Javascript 扩展
 
+静态类函数:Wke.extend(func,name,param):
+
+使用一个指定的python函数作为扩展的js函数
+
+Example:
+
+```python
+    webview = WebWindow()
+    webview.create(0,0,0,800,600)
+   
+    def pyAction(**kwargs):
+        es=kwargs['es']
+        context =kwargs['param']
+        webview = context
+        arg_count=Wke.jsArgCount(es)
+        val_ls=Wke.getJsArgs(es,arg_count)
+        webview.runJsCode('alert("jsCallpy'+str(val_ls)+'")')
+        return
+    
+    Wke.extend(pyAction,'jsCallpy', param=webview)
+```
+
+ 在html/js 中调用
+
+```html
+<button onclick="jsCallpy('jsCallpy', 666)" style='margin-right: 20px;cursor: pointer;'>jsCallpy</button>
+```
+
+## Javascript 集成
+
+WebView/WebWindows的runJsCode/runJsFile/runJsFunc方法支持Python端在网页对象中运行js代码。
 
 ## 其它WkeWin32
 
@@ -293,12 +286,6 @@ WkeWin32包含了Win32相关下面的辅助方法：
 wkeSetIcon/wkeCreateWindow/wkeCreateTransparentWindow/wkeSetWindowLongHook/wkeGetWindowLongHook 等方法;
 
 定时类WkeTimer/截屏类WkeSnapShot
-
-
-
-# Javascript 集成
-
-WebView/WebWindows的runJsCode/runJsFile/runJsFunc方法支持Python端在网页对象中运行js代码。
 
 # 插件支持
 
@@ -312,17 +299,39 @@ WebView.bind(父窗口hwnd,x,y,w,h)在一个已经创建的父窗口hwnd上绑�
 
 参见wkeWin32ProcMsg中WebViewWithProcHwnd和example/bindWebview.py
 
-### Ctypes数据类型
 
-参见prepare.py.translate()与wke.h.json
+
+# 发布
+
+## pyinstaller
+
+(Pyinstaller>=6.0.0 )
+
+- 在Pyinstaller打包 one dir（-D 目录模式）时，除可执行文件外，其余文件都将被转移到 _internal 文件夹
+
+    即Package根目录
+
+- 在Pyinstaller打包 one file （-F 文件模式）时，除可执行文件外，其余文件都将被转移到一个临时文件夹
+
+    即Package根目录
+
+- 在Python解释器模式下,以Lib\site-packages
+
+    以此为Package的根目录
 
 
 
 # 其他问题
 
-### Alert/Prompt/Confirm
+## Ctypes数据类型
 
-需要使用wkeEvent的回调函数额外实现相应的GUI及其返回值控制，参见examples.
+参见prepare.py.translate()与wke.h.json
+
+## Alert/Prompt/Confirm
+
+Minibilink支持Alert和Confirm,但是Prompt没实现。
+
+可以使用wkeEvent的回调函数额外实现相应的GUI及其返回值控制，参见examples.
 
 ## PromptBoxCallback的Py形参和返回值
 
@@ -346,7 +355,7 @@ wkeEvent.py中32位下wkeGetStringW(str)运行正常,但是64位会c函数内部
 
 现在默认wkeString全部是utf8，改为wkeGetString(str),然后做binary->str的解码
 
-### wkeString的Ctypes参数类型
+## wkeString的Ctypes参数类型
 
 将只读wkeString 全翻译为c_char_p,方便ctypes自动转换字符串。
 
@@ -363,15 +372,15 @@ wkePromptBoxCallback的最后一个参数为wkeString,需要作为传参返回,�
 
 
 
-
-
 # TODO
 
 Wke/WebView的job/request有些地方未修订验证
 
 下载/插件/通信事件回调 暂都未验证
 
-wkeEvent的注释待梳理
+RunJs验证了参数功能正常,但是返回值总是None
+
+
 
 
 # [Contact Us](mailto://wyh917@163.com)

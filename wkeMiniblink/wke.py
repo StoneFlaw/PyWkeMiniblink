@@ -38,41 +38,31 @@ class Wke():
     Examples:
         .. code:: python
         
-            Wke.init()
+            
             ....
             Wke.runMessageLoop()
 
     """   
     #动态库
-    dll = None
+    dll = MINIBLINK_DLL_HANDLE
 
-    dllPath = ""
+    dllPath = MINIBLINK_DLL_PATH
     #js管理
     js = None
     #事件管理
-    event = None
+    event = WkeEvent()
     #接口版本数值
-    version = 0
+    version =  wkeVersion()
 
     _jsBinderContext = {}
 
     _localStagePath = None
     _cookiePath =  None
+
     @staticmethod
     def Version():
         return wkeVersionString()
 
-    @staticmethod
-    def init(**kwargs):
-        """
-        
-        """
-        Wke.dll = MINIBLINK_DLL_HANDLE
-        Wke.dllPath = MINIBLINK_DLL_PATH
-        Wke.event = WkeEvent()
-        Wke.version = wkeVersion()
-        return
-    
     @staticmethod
     def getDLL():
         """返回动态库DLL对象
@@ -701,7 +691,6 @@ class WebView():
             k(str):      绑定键
             v(any):      绑定对象
         """   
-        #val = py_object(v)
         k = k.encode()
        
         return wkeSetUserKeyValue(self.cId,k,cast(id(v), c_void_p))
@@ -1239,6 +1228,9 @@ class WebView():
             js_code(str):指定的js代码
         Returns:
             str: js代码执行结果
+
+        TODO:
+            NO VERIFY
         """
         es=self.getJsExec()
         #闭包执行JS

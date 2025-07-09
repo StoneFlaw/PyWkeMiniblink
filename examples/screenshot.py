@@ -32,7 +32,7 @@ def snapshot(**kwargs):
     return 0
 
 def main():
-    Wke.init()
+    
     Wke.setCookieAndStagePath(cookie=f'{father_folder }/build/cookie.dat',localStage=f'{father_folder }/build/LocalStage')
     print("Miniblink Version :",Wke.version,"\n Version:",Wke.Version(),"\n DLL:",Wke.dllPath)
     webview = WebWindow()

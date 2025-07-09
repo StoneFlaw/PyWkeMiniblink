@@ -6,9 +6,17 @@
 
 ## 2025/07/05 v0.1.7
 
-为prepare.py增加输出wke.h.json，以及输出MiniblinkInit函数声明的功能
+为prepare.py增加输出wke.h.json,以及输出MiniblinkInit函数声明的功能
 
-调整wkeEvent.py中的回调函数中额外参数在**kwargs中，而不是*args中，避免32/64位下错乱不一致
+调整wkeEvent.py中的回调函数中额外参数在**kwargs中,而不是*args中,避免32/64位下错乱不一致
+
+修正Wke.extend/jsBindFunction的参数类型错误。以前32位下不报错,64位会转换类型报错
+
+修正了init.py中dll加载方式和全局函数声明,对应wkeEvent.py/wke.py中调用方式
+
+修正了wkeWin32.py中关于setWindowLong的x64版本,特别是wkeReplaceHWndProc的实现
+
+增加了一些测试程序,调改了一部分测试用html文件
 
 ### wkeGetString
 
@@ -24,7 +32,7 @@ Miniblink文档中String对应utf8*而StringW对应utf16*
 
 ###  CFunctionType instance
 
-32、64位模式下，函数argtypes与回调函数如果不一致时抛出
+32、64位模式下,函数argtypes与回调函数如果不一致时抛出
 
 ctypes.ArgumentError: argument 2: TypeError: expected CFunctionType instance instead of CFunctionType
 
@@ -68,7 +76,7 @@ Alert/Prompt/Confirm需要使用wkeEvent的回调函数额外实现相应的GUI�
 
 
 ## 2025/02/16 v0.1.7a
-开始修复x64下兼容性问题。miniblink.py/MiniblinkInit()关于cdll中一些接口函数的省略了部分形参的声明，在32位下缺省为c_int,在x64下缺省c_int将与minibilink.dll不一致导致出错
+开始修复x64下兼容性问题。miniblink.py/MiniblinkInit()关于cdll中一些接口函数的省略了部分形参的声明,在32位下缺省为c_int,在x64下缺省c_int将与minibilink.dll不一致导致出错
 
             X86     X64
 BOOL        1       1
@@ -81,7 +89,7 @@ FLOAT       4       4
 DOUBLE      8       8
 PRT         4       8
 
-在x64系统中，HWND是窗口句柄的数据类型，用于标识窗口对象。它是一个64位长的整数
+在x64系统中,HWND是窗口句柄的数据类型,用于标识窗口对象。它是一个64位长的整数
 
 只是临时验证,并未完全修正
 

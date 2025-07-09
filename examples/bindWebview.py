@@ -20,8 +20,8 @@ from wkeMiniblink.wkeWin32 import *
 from wkeMiniblink.wkeWin32ProcMsg import *
 
 
-init_path=os.getcwd()
-icon_path=f'{father_folder}/logo.ico'
+
+
 
 
 user32=windll.user32
@@ -70,7 +70,7 @@ def jsWindowExtend(**kwargs):
     return 0
 
 def main():
-    Wke.init()
+    
     Wke.setCookieAndStagePath(cookie=f'{father_folder }/build/cookie.dat',localStage=f'{father_folder }/build/LocalStage')
     print("Miniblink Version :",Wke.version,"\n Version:",Wke.Version(),"\n DLL:",Wke.dllPath)
 
@@ -78,7 +78,7 @@ def main():
 
     hwnd = wkeCreateTransparentWindow('自创建Win窗口',x,y,w,h)
     
-    wkeSetIcon(hwnd,icon_path)
+    wkeSetIcon(hwnd,f'{father_folder}/logo.ico')
     webview = WebViewWithProcHwnd(isTransparent=True,isZoom=False)
     webview.bind(hwnd,x,y,w,h)   
     
@@ -86,7 +86,7 @@ def main():
 
     #webview.loadURL('https://www.w3school.com.cn/jsref/index.asp')
     webview.loadFile(f'{father_folder}/res/testdata/testComplex.html')
-    
+    webview.moveToCenter()
     Wke.extend(jsWindowExtend,'jsWindowExtend', param=webview)
     Wke.extend(jsCallpy,'jsCallpy', param=webview)
     win32gui.ShowWindow(hwnd,SW_SHOWNORMAL)

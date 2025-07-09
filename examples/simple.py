@@ -13,12 +13,13 @@ from wkeMiniblink.wkeEvent import WkeEvent
 from wkeMiniblink.wkeWin32 import *
 
 def main():
-    Wke.init()
-
+  
     print("Miniblink Version :",Wke.version,"\n Version:",Wke.Version(),"\n DLL:",Wke.dllPath)
     webview = WebWindow()
     webview.create(0,0,0,800,600)
     webview.setCookieAndStagePath(cookie=f'{father_folder }/build/cookie.dat',localStage=f'{father_folder }/build/LocalStage')
+    wkeSetIcon(webview.hwnd,f'{father_folder}/logo.ico')
+
     def OnCloseEvent(context,*args,**kwargs):
         win32gui.PostQuitMessage(0)
         return True

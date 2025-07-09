@@ -1,4 +1,5 @@
 {
+    //目录unitTest下所有test*.py文件,vscode边栏
     "python.testing.unittestArgs": [
         "-v",
         "-s",
