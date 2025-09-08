@@ -52,7 +52,11 @@ def GetMiniblinkDLL():
     global MINIBLINK_DLL_HANDLE
     return MINIBLINK_DLL_HANDLE
 
+def GetMiniblinkPath():
+    return MINIBLINK_DLL_PATH
 
+def GetMiniblinkDir():
+    return os.path.dirname(MINIBLINK_DLL_PATH)
 
 def find_miniblink():
     global MINIBLINK_DLL_PATH 

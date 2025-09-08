@@ -141,6 +141,48 @@ def wkeMessageBox(msg,title="",parent=None):
     ret = win32gui.MessageBox(parent, msg, title, win32con.MB_OK)
     return ret
 
+
+def _wkeFileDialog(mode,title, path=None,fspec="",flags =win32con.OFN_EXPLORER): 
+    '''
+    flags = win32con.OFN_ALLOWMULTISELECT | win32con.OFN_EXPLORER     #允许多选
+    fspec = 'Text Files (*.txt)|*.txt|All Files (*.*)|*.*'
+    '''
+    dlg = win32ui.CreateFileDialog(1,None,None,flags,fspec)
+    if path is not None:
+        if os.path.isfile(path):
+            dlg.SetOFNInitialDir(os.path.dirname(path))
+        elif os.path.isdir(path):
+            dlg.SetOFNInitialDir(path)
+
+    dlg.SetOFNTitle(title)
+
+    return dlg
+
+def wkeOpenFileDialog(title, path=None,fspec="",flags =win32con.OFN_EXPLORER): 
+    dlg = _wkeFileDialog(1,title, path,fspec,flags) 
+    ok = dlg.DoModal()
+    if ok == 1:
+        return dlg.GetPathName()
+    
+    return ""
+
+def wkeOpenFilesDialog(title, path=None,fspec="",flags =win32con.OFN_EXPLORER |win32con.OFN_ALLOWMULTISELECT): 
+    dlg = _wkeFileDialog(1,title, path,fspec,flags) 
+    ok = dlg.DoModal()
+    if ok == 1:
+        return dlg.GetPathName()
+    
+    return ""
+
+def wkeSaveFileDialog(title, path=None,fspec="",flags =win32con.OFN_EXPLORER): 
+    dlg = _wkeFileDialog(0,title, path,fspec,flags) 
+    ok = dlg.DoModal()
+    if ok == 1:
+        return dlg.GetPathName()
+    return ""  
+    
+
+
 def wkeCreateWindow(title="",x=0,y=0,w=640,h=480,className='Miniblink'):
     """创建窗口
 

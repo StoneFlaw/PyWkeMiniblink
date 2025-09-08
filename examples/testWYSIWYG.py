@@ -1,6 +1,5 @@
 # -*- coding:utf-8 -*-
 import os,sys,platform,time
-from pprint import *
 from pathlib import Path
 import win32gui
 
@@ -14,33 +13,24 @@ from wkeMiniblink.wkeEvent import WkeEvent
 from wkeMiniblink.wkeWin32 import *
 
 def main():
-    
-    Wke.setCookieAndStagePath(cookie=f'{father_folder }/build/cookie.dat',localStage=f'{father_folder }/build/LocalStage')
+  
     print("Miniblink Version :",Wke.version,"\n Version:",Wke.Version(),"\n DLL:",Wke.dllPath)
     webview = WebWindow()
     webview.create(0,0,0,800,600)
-
-    def OnTheEvent(context,*args,**kwargs):
-        param = context["param"]
-        print(f"{str(param)} \nargs:{pformat(args)}\nkwargs:{pformat(kwargs)}\n=======================\n")
-        return 0
+    webview.setCookieAndStagePath(cookie=f'{father_folder }/build/cookie.dat',localStage=f'{father_folder }/build/LocalStage')
+    wkeSetIcon(webview.hwnd,f'{father_folder}/logo.ico')
 
     def OnCloseEvent(context,*args,**kwargs):
         win32gui.PostQuitMessage(0)
         return True
-
-
-    
-    webview.onTitleChanged(OnTheEvent,'TITLE Changed')
     webview.onWindowClosing(OnCloseEvent,param='App Quit')
-    #webview.onDocumentReady2(OnTheEvent,'Document is Ready')
-
-
     
-    webview.loadURL('https://www.w3school.com.cn/jsref/index.asp')
+    #The WYSIWYG URL
+    webview.loadURL("https://uutool.cn/ckeditor4/")
+
     webview.showWindow(True)
-    #wkePumpMessages()
-    Wke.runMessageLoop()
+    wkePumpMessages()
+    #Wke.runMessageLoop()
     #win32gui.PumpMessages()
 
 if __name__=='__main__':

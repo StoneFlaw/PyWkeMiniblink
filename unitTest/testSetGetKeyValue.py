@@ -11,7 +11,7 @@ import unittest
 current_folder = Path(__file__).absolute().parent
 father_folder = str(current_folder.parent)
 os.chdir(str(current_folder))
-sys.path.append(father_folder)
+
 
 
 import ctypes

@@ -806,7 +806,7 @@ class WebView():
 
 
     def addPluginDirectory(self,_path):
-        """设置页面右键上下文菜单使能与否
+        """添加插件目录
 
         Todo: 
             API文档上没有这一段

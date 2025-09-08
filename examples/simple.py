@@ -6,7 +6,7 @@ import win32gui
 current_folder = Path(__file__).absolute().parent
 father_folder = str(current_folder.parent)
 os.chdir(str(current_folder))
-sys.path.append(father_folder)
+
 
 from wkeMiniblink.wke import Wke,WebView,WebWindow
 from wkeMiniblink.wkeEvent import WkeEvent

@@ -23,7 +23,7 @@ bit=architecture()[0]
 
 tar_dir = "wkeMiniblink/bin"
 src_file = "res/miniblink.zip"
-tar_file = "wkeMiniblink/bin/miniblink.dll"
+
 
 if bit == '64bit':
     dllName = "miniblink_4975_x64.dll"
@@ -32,17 +32,9 @@ else:
 
 def prepare():
     """
-    制作安装包前,创建版本对应dll
+    制作安装包前,将res中压缩包中dll释放到wkeMiniblink/bin目录
     """
-    print(f'Prepare [{tar_file}]')
-
-    # 确保目标目录存在，如果不存在则创建
-    if not os.path.exists(tar_dir):
-        os.makedirs(tar_dir)
-
-    if os.path.exists(tar_file):
-        os.remove(tar_file)
-
+    
     # 打开.zip文件并解压缩
     with zipfile.ZipFile(src_file, 'r') as zip_ref:
         tar_dll = zip_ref.extract("miniblink_4975_x32.dll",tar_dir)
@@ -56,20 +48,12 @@ def prepare():
 
 def doc():
     """
+    将当前根目录的README.md和CHANGELOG.md 拷贝到docs/source 以便生成最新的文档
     """
     shutil.copy2("README.md","docs/source/README.md")
     print(f'    文件 README.md    => docs/source/README.md')
     shutil.copy2("CHANGELOG.md","docs/source/CHANGELOG.md")  
     print(f'    文件 CHANGELOG.md =>docs/source/CHANGELOG.md')
-    return
-
-def clean():
-    """
-    """
-    print(f'Clean [{tar_file}]')
-    if os.path.exists(tar_file):
-        os.remove(tar_file)
-        print(f'    文件 {tar_file} 删除')
     return
 
 def strip_json_comments(json_string):
@@ -132,8 +116,8 @@ def read_json_without_comment(name):
 
 def translate():
     """
-
-    
+    把docs\\source\\wke.h中关于接口函数翻译成py声明
+    依据docs\\source\\wke.h.json关于各种数据类型的转换规则
     """
     ctypeTable,ctypeCommentTable = read_json_with_comment("docs\\source\\wke.h.json")
 
@@ -218,27 +202,50 @@ def translate():
         #fout = open("docs\\source\\wke.txt","w",encoding="utf-8")
         #fout.write(msg)
         #print(msg)
-                
-       
-                
+           
+    return
+def pth():
+    """
+    在python解释器的site-packages路径下生成pth文件,将当前目录的绝对路径写入,以便将其加入库搜索路径
+    """
+    current = os.path.dirname(__file__)
+
+    pypth = os.path.dirname(sys.executable)
+    
+    sitpth = pypth +os.sep+"Lib\\site-packages"
+
+    pthpth = sitpth+ os.sep+"wkeminiblink.pth"
+
+    with open(pthpth,"w") as f:
+        f.write(f"{current}")
+
+
     return
 
 if __name__=='__main__':
     argv = sys.argv
     argc = len(sys.argv)
-    opt = 'translate'
+
+    opt = 'pth'
+
+    optDict = {"prepare":prepare,"doc":doc,"translate":translate,"pth":pth}
+
+    def help():
+        for o  in optDict:
+            print(f"{o}:{optDict[o].__doc__}")
 
     if argc >= 2:
         opt = argv[1]
+    else:
+        if opt not in optDict:
+            help()
+            sys.exit(-1)
+
+    if opt in optDict:
+        optDict[opt]()
+    else:
+        help()
     
-    if opt == 'prepare':
-        prepare()
-    elif opt == 'doc':
-        doc()
-    elif opt == 'clean':
-        clean()
-    elif opt == 'translate':
-        translate()
 
 
 

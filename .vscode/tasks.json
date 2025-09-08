@@ -49,7 +49,7 @@
         {
             "label": "制作wheel安装包",
             "type": "shell",
-            "command": "python setup.py bdist_wheel ",
+            "command": "python setup.py bdist_wheel",
             //"command": "pip wheel --wheel-dir=./build/ ./",
             "args": [],
             "echo": true,  
